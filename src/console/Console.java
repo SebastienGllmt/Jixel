@@ -5,10 +5,10 @@ import math.JixelMath;
 
 public class Console implements Runnable {
 
-	Scanner scan = new Scanner(System.in);
-	Thread thread;
+	private Scanner scan = new Scanner(System.in);
+	private Thread thread;
 	public boolean isRunning = true;
-	VariableManager vm;
+	private VariableManager vm;
 	
 	public Console(VariableManager vm){
 		thread = new Thread(this, "Console");
@@ -19,7 +19,6 @@ public class Console implements Runnable {
 	public void print(String message){
 		System.out.println(message);
 	}
-	
 	public void cInput(String[] input){
 		String answer = "Unknown command.";
 		int type=-1;
@@ -56,7 +55,7 @@ public class Console implements Runnable {
 		}
 		
 		if(type == -1){
-			System.out.println(answer);
+			print(answer);
 			return;
 		}
 		
@@ -96,7 +95,7 @@ public class Console implements Runnable {
 				}
 			}
 		}
-		System.out.println(answer);
+		print(answer);
 		return;
 	}
 	

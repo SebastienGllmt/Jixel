@@ -30,23 +30,26 @@ public class VariableManager {
 			variableArray.add(new ArrayList<Variable<?>>());
 		}
 		//Creates starting values so these sections can't be entirely missing to help the save/load process
-		newVar(0, "Null", false);
-		newVar(1, "Null", 0);
-		newVar(2, "Null", "Null");
+		newVar(0, "Null", false, true);
+		newVar(1, "Null", 0, true);
+		newVar(2, "Null", "Null", true);
 	}
 
-	public <T> void newVar(int type, String name, T t) {
+	public <T> int newVar(int type, String name, T value, boolean toSave) {
 		if(!JixelMath.isStartNum(name)){
 			List<Variable<?>> array = variableArray.get(type);
 			for(int i=0; i<array.size(); i++){
 				if(array.get(i).getName().equals(name)){
 					System.out.println("Invalid variable name. Name already exists.");
-					return;
+					return 0;
 				}
 			}
-			array.add(new Variable<T>(array.size(), name, t));
+			int id = array.size();
+			array.add(new Variable<T>(id, name, value, toSave));
+			return id;
 		}else{
 			System.out.println("Invalid variable name. Can not start with a number.");
+			return 0;
 		}
 	}
 	
@@ -118,7 +121,7 @@ public class VariableManager {
 			DataOutputStream dos = new DataOutputStream(out);
 			for(int i=0; i<TYPES; i++){
 				List<Variable<?>> tempArray = variableArray.get(i);
-				int typeSize = tempArray.size();
+				int typeSize = getSaveSize(tempArray);
 				dos.writeInt(typeSize);
 				for(int j=0; j<typeSize; j++){
 					dos.writeUTF(tempArray.get(j).getName());
@@ -144,10 +147,32 @@ public class VariableManager {
 		}
 	}
 	
+	private int getSaveSize(List<Variable<?>> tempArray){
+		int size=0;
+		for(int i=0; i<tempArray.size(); i++){
+			if(tempArray.get(i).getSave()){
+				size++;
+			}
+		}
+		return size;
+	}
+	
+	/**
+	 * Loads a profile by its id
+	 * Warning: Will clear all variables, toSave or not
+	 * @param profileID
+	 * @return whether the profile loaded correctly
+	 */
 	public boolean load(int profileID){
 		String filepath = String.format("%s%d%s", SAV_NAME, profileID, SAV_TYPE);
 		return load(filepath);
 	}
+	/**
+	 * Loads a file with a given name
+	 * Warning: Will clear all variables, toSave or not.
+	 * @param file - File name in /profiles/
+	 * @return whether the profile loaded correctly
+	 */
 	public boolean load(String file){
 		File dir = new File(SAV_DIR);
 		if(!dir.exists()){
@@ -167,13 +192,13 @@ public class VariableManager {
 					String name = dis.readUTF();
 					switch(i){
 						case 0:
-							newVar(i, name, dis.readBoolean());
+							newVar(i, name, dis.readBoolean(), true);
 							break;
 						case 1:
-							newVar(i, name, dis.readInt());
+							newVar(i, name, dis.readInt(), true);
 							break;
 						case 2:
-							newVar(i, name, dis.readUTF());
+							newVar(i, name, dis.readUTF(), true);
 							break;
 					}
 				}
@@ -185,6 +210,9 @@ public class VariableManager {
 		}
 	}
 	
+	/**
+	 * Warning: Will clear all variables, toSave or not
+	 */
 	private void clearVars(){
 		for(int i=0; i<TYPES; i++){
 			List<Variable<?>> tempArray = variableArray.get(i);

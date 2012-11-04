@@ -10,7 +10,7 @@ import gui.Screen;
 public class JixelGame extends Canvas{
 
 	public static VariableManager vm = new VariableManager();
-	private Console con = new Console(vm);
+	private static Console con = new Console(vm);
 	
 	public int width;
 	public int height;
@@ -48,7 +48,7 @@ public class JixelGame extends Canvas{
 	public Screen getScreen(){
 		return screen;
 	}
-	public Console getConsole(){
+	public static Console getConsole(){
 		return con;
 	}
 
