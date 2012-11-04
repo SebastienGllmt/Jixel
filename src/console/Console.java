@@ -1,6 +1,7 @@
 package console;
 
 import java.util.Scanner;
+import math.JixelMath;
 
 public class Console implements Runnable {
 
@@ -8,14 +9,6 @@ public class Console implements Runnable {
 	Thread thread;
 	public boolean isRunning = true;
 	VariableManager vm;
-	
-	public static void main(String[] args) {
-		VariableManager var = new VariableManager();
-		var.newVar(var.FLAG, "BOOL", true);
-		var.newVar(var.INT, "TEST", 5);
-		var.newVar(var.STRING, "STRING", "HEY");
-		Console cons = new Console(var);
-	}
 	
 	public Console(VariableManager vm){
 		thread = new Thread(this, "Console");
@@ -39,24 +32,46 @@ public class Console implements Runnable {
 				type = vm.STRING;
 			}
 		}
-		if(type == -1){
-			System.out.println(answer);
-			return;
-		}
+		
 		if(input.length == 1){
 			if(input[0].equals("stop")){
 				isRunning=false;
 				answer = "Console stopped";
 			}
 		}else if(input.length == 2){
-			
-		}else if(input.length == 3){
-			if(isNum(input[1].charAt(0))){
-				int value = Integer.parseInt(input[1]);
-				if(input[2].equals("name")){
-					answer = vm.getName(type, value);
-				}else if(input[2].equals("value")){
-					answer = vm.getValueString(type, value);
+			if(input[0].equals("save")){
+				if(vm.save(input[1])){
+					answer = "Profile saved.";
+				}else{
+					answer = "Save failed.";
+				}
+			}
+			if(input[0].equals("load")){
+				if(vm.load(input[1])){
+					answer = "Profile loaded.";
+				}else{
+					answer = "Loading failed.";
+				}
+			}
+		}
+		
+		if(type == -1){
+			System.out.println(answer);
+			return;
+		}
+		
+		if(input.length == 3){
+			answer = "Failed to get";
+			if(JixelMath.isStartNum(input[1])){
+				if(JixelMath.isNum(input[1])){
+					int id = Integer.parseInt(input[1]);
+					if(input[2].equals("name")){
+						answer = vm.getName(type, id);
+					}else if(input[2].equals("value")){
+						answer = vm.getValueString(type, id);
+					}
+				}else{
+					answer = "Invalid variable id.";
 				}
 			}else{
 				if(input[2].equals("id")){
@@ -66,18 +81,48 @@ public class Console implements Runnable {
 				}
 			}
 		}else if(input.length == 4){
-			
+			if(input[0].equals("set")){
+				answer = "Failed to set";
+				if(JixelMath.isStartNum(input[2])){
+					if(JixelMath.isNum(input[2])){
+						int id = Integer.parseInt(input[2]);
+						answer = setVM(type, id, input[3]);
+					}else{
+						answer = "Invalid variable id.";
+					}
+				}else{
+					int id = vm.getID(type, input[3]);
+					answer = setVM(type, id, input[3]);
+				}
+			}
 		}
 		System.out.println(answer);
 		return;
 	}
 	
-	private boolean isNum(char c){
-		byte b = (byte)c;
-		if(b>=48 && b<=57){
-			return true;
+	private String setVM(int type, int id, String input){
+		String answer = "Failed to set";
+		
+		if(type==0){
+			if(input.equals("true") || input.equals("1")){
+				vm.setValue(type, id, true);
+				answer = "Set to true";
+			}else if(input.equals("false") || input.equals("0")){
+				vm.setValue(type, id, false);
+				answer = "Set to false";
+			}
+		}else if(type==1){
+			if(JixelMath.isNum(input)){
+				int value = Integer.parseInt(input);
+				vm.setValue(type, id, value);
+				answer = "Set to " + value;
+			}
+		}else if(type==2){
+			vm.setValue(type, id, input);
+			answer = "Set to " + input;
 		}
-		return false;
+		
+		return answer;
 	}
 
 	@Override

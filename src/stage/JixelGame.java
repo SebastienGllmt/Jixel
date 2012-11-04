@@ -6,9 +6,10 @@ import console.Console;
 import console.VariableManager;
 import gui.Screen;
 
+@SuppressWarnings("serial")
 public class JixelGame extends Canvas{
 
-	private VariableManager vm = new VariableManager();
+	public static VariableManager vm = new VariableManager();
 	private Console con = new Console(vm);
 	
 	public int width;
@@ -49,9 +50,6 @@ public class JixelGame extends Canvas{
 	}
 	public Console getConsole(){
 		return con;
-	}
-	public VariableManager getVM(){
-		return vm;
 	}
 
 }

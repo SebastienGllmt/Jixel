@@ -12,8 +12,9 @@ public class Variable<T> {
 		this.id = id;
 	}
 	
-	public void setValue(T t) { 
-		this.t = t; 
+	@SuppressWarnings("unchecked")
+	public void setValue(Object o) { 
+		this.t = (T) o; 
 	}
 	public T getValue() {
 		return t;
