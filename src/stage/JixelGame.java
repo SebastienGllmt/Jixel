@@ -1,7 +1,10 @@
 package stage;
 
+import input.JixelInput;
+
 import java.awt.Canvas;
 import java.awt.Dimension;
+import java.awt.image.BufferStrategy;
 
 import javax.swing.JFrame;
 
@@ -19,10 +22,11 @@ public class JixelGame extends Canvas{
 	public int height;
 	public int scale;
 	public int tileSize;
+	public final String GAME_TITLE;
 	
 	private JixelScreen screen;
 	private JFrame frame;
-	public final String GAME_TITLE;
+	private BufferStrategy bs;
 	
 	private long timer;
 	private long lastTime;
@@ -31,6 +35,8 @@ public class JixelGame extends Canvas{
 	private int frames;
 	private int updates;
 	long now;
+	
+	JixelInput input = new JixelInput();
 	
 	public JixelGame(String title, int width, int height, int scale, int tileSize){
 		GAME_TITLE = title;
@@ -53,6 +59,10 @@ public class JixelGame extends Canvas{
 		
 		vm.newVar("paused", false);
 		screen = new JixelScreen(width, height, tileSize);
+		createBufferStrategy(3);
+		bs = getBufferStrategy();
+		
+		addKeyListener(input);
 	}
 	
 	public void startTime(double fps){
@@ -111,6 +121,12 @@ public class JixelGame extends Canvas{
 	}
 	public boolean getPaused(){
 		return vm.getValue("paused");
+	}
+	public BufferStrategy getBuffer(){
+		return bs;
+	}
+	public JixelInput keys(){
+		return input;
 	}
 
 }
