@@ -60,12 +60,15 @@ public class JixelVariableManager {
 			}
 			OutputStream out = new FileOutputStream(f);
 			ObjectOutputStream oos = new ObjectOutputStream(out);
+			setValue("paused", true);
 			oos.writeObject(varMap);
 			oos.flush();
 			oos.close();
 			out.close();
+			setValue("paused", false);
 			return true;
 		}catch(IOException e){
+			setValue("paused", false);
 			return false;
 		}
 	}
@@ -97,9 +100,10 @@ public class JixelVariableManager {
 			if(!f.exists()){
 				return false;
 			}
-			varMap.clear();
 			InputStream in = new FileInputStream(f);
 			ObjectInputStream ois = new ObjectInputStream(in);
+			setValue("paused", true);
+			varMap.clear();
 			try {
 				varMap = (HashMap<String,Object>)ois.readObject();
 			} catch (ClassNotFoundException e) {
@@ -107,8 +111,10 @@ public class JixelVariableManager {
 			}
 			ois.close();
 			in.close();
+			setValue("paused", false);
 			return true;
 		}catch(IOException e){
+			setValue("paused", false);
 			return false;
 		}
 	}
