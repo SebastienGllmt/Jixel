@@ -36,7 +36,7 @@ public class JixelGame extends Canvas{
 	private int updates;
 	long now;
 	
-	JixelInput input = new JixelInput();
+	private JixelInput input = new JixelInput();
 	
 	public JixelGame(String title, int width, int height, int scale, int tileSize){
 		GAME_TITLE = title;
@@ -57,7 +57,7 @@ public class JixelGame extends Canvas{
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 		
-		vm.newVar("paused", false);
+		vm.newVar("Jixel_paused", false);
 		screen = new JixelScreen(width, height, tileSize);
 		createBufferStrategy(3);
 		bs = getBufferStrategy();
@@ -65,8 +65,8 @@ public class JixelGame extends Canvas{
 		addKeyListener(input);
 	}
 	
-	public void startTime(double fps){
-		ns = 1000000000.0 / fps;
+	public void startTime(double ups){
+		ns = 1000000000.0 / ups;
 		timer = System.currentTimeMillis();
 		lastTime = System.nanoTime();
 		delta = 0;
@@ -120,7 +120,7 @@ public class JixelGame extends Canvas{
 		return con;
 	}
 	public boolean getPaused(){
-		return vm.getValue("paused");
+		return vm.getValue("Jixel_paused");
 	}
 	public BufferStrategy getBuffer(){
 		return bs;

@@ -22,7 +22,7 @@ public class JixelVariableManager {
 
 	public <T> void newVar(String name, T value) {
 		if(varMap.containsKey(name)){
-			System.out.println("A variable with that name already exists");
+			JixelGame.getConsole().print("A variable with that name already exists");
 			return;
 		}
 		varMap.put(name, value);
@@ -36,7 +36,6 @@ public class JixelVariableManager {
 		}
 		return (T) o;
 	}
-	
 	public <T> void setValue(String name, T value){
 		if(!varMap.containsKey(name)){
 			JixelGame.getConsole().print("No such variable detected so it was created.");
