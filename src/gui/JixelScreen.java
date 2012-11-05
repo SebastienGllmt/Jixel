@@ -6,7 +6,6 @@ public class JixelScreen {
 
 	private int width, height;
 	private int tilesX, tilesY;
-	private int tileSize;
 	private int FIXSHIFT;
 	public int[] pixels;
 	public int[][] tiles;
@@ -15,8 +14,6 @@ public class JixelScreen {
 	public JixelScreen(int width, int height, int tileSize){
 		this.width = width;
 		this.height = height;
-		this.tileSize = tileSize;
-		
 		tilesX = width/tileSize;
 		tilesY = height/tileSize;
 		FIXSHIFT = (int) (Math.log(tileSize)/Math.log(2));
@@ -46,8 +43,14 @@ public class JixelScreen {
 	public void render(int xOffset, int yOffset){
 		for(int y=0; y<height; y++){
 			int yy = y + yOffset;
+			if(yy < 0){
+				yy = 0;
+			}
 			for(int x=0; x<width; x++){
 				int xx = x + xOffset;
+				if(xx < 0){
+					xx = 0;
+				}
 				pixels[x+y*width] = tiles[(yy >> FIXSHIFT)%(tilesY-1)][(xx >> FIXSHIFT)%(tilesX-1)];
 			}
 		}
