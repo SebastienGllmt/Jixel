@@ -3,14 +3,14 @@ package console;
 import java.util.Scanner;
 import math.JixelMath;
 
-public class Console implements Runnable {
+public class JixelConsole implements Runnable {
 
 	private Scanner scan = new Scanner(System.in);
 	private Thread thread;
 	public boolean isRunning = true;
-	private VariableManager vm;
+	private JixelVariableManager vm;
 	
-	public Console(VariableManager vm){
+	public JixelConsole(JixelVariableManager vm){
 		thread = new Thread(this, "Console");
 		this.vm = vm;
 		thread.start();
@@ -90,7 +90,7 @@ public class Console implements Runnable {
 						answer = "Invalid variable id.";
 					}
 				}else{
-					int id = vm.getID(type, input[3]);
+					int id = vm.getID(type, input[2]);
 					answer = setVM(type, id, input[3]);
 				}
 			}

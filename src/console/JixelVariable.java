@@ -1,17 +1,15 @@
 package console;
 
-public class Variable<T> {
+public class JixelVariable<T> {
 
 	private T value;
 	private String name;
 	private int id;
-	private boolean toSave;
 	
-	public Variable(int id, String name, T value, boolean toSave){
+	public JixelVariable(int id, String name, T value){
 		this.name = name;
 		this.value = value;
 		this.id = id;
-		this.toSave = toSave;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -26,9 +24,6 @@ public class Variable<T> {
 	}
 	public int getID(){
 		return id;
-	}
-	public boolean getSave(){
-		return toSave;
 	}
 	@Override
 	public String toString(){

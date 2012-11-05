@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import math.JixelMath;
 
-public class VariableManager {
+public class JixelVariableManager {
 
 	private final int TYPES = 3;
 	public int FLAG = 0;
@@ -23,21 +23,21 @@ public class VariableManager {
 	private final String SAV_NAME = "char";
 	private final String SAV_TYPE = ".sav";
 
-	private List<List<Variable<?>>> variableArray = new ArrayList<List<Variable<?>>>();
+	private List<List<JixelVariable<?>>> variableArray = new ArrayList<List<JixelVariable<?>>>();
 
-	public VariableManager() {
+	public JixelVariableManager() {
 		for(int i=0; i<TYPES; i++){
-			variableArray.add(new ArrayList<Variable<?>>());
+			variableArray.add(new ArrayList<JixelVariable<?>>());
 		}
 		//Creates starting values so these sections can't be entirely missing to help the save/load process
-		newVar(0, "Null", false, true);
-		newVar(1, "Null", 0, true);
-		newVar(2, "Null", "Null", true);
+		newVar(0, "Null", false);
+		newVar(1, "Null", 0);
+		newVar(2, "Null", "Null");
 	}
 
-	public <T> int newVar(int type, String name, T value, boolean toSave) {
+	public <T> int newVar(int type, String name, T value) {
 		if(!JixelMath.isStartNum(name)){
-			List<Variable<?>> array = variableArray.get(type);
+			List<JixelVariable<?>> array = variableArray.get(type);
 			for(int i=0; i<array.size(); i++){
 				if(array.get(i).getName().equals(name)){
 					System.out.println("Invalid variable name. Name already exists.");
@@ -45,7 +45,7 @@ public class VariableManager {
 				}
 			}
 			int id = array.size();
-			array.add(new Variable<T>(id, name, value, toSave));
+			array.add(new JixelVariable<T>(id, name, value));
 			return id;
 		}else{
 			System.out.println("Invalid variable name. Can not start with a number.");
@@ -57,10 +57,13 @@ public class VariableManager {
 		return toString(type, getID(type, name));
 	}
 	public <T> String toString(int type, int id){
+		if(type > TYPES || id >= variableArray.get(type).size()){
+			return null;
+		}
 		return variableArray.get(type).get(id).toString();
 	}
 	public int getID(int type, String name){
-		List<Variable<?>> array = variableArray.get(type);
+		List<JixelVariable<?>> array = variableArray.get(type);
 		int position = 0;
 		for(int i=0; i<array.size(); i++){
 			if(array.get(i).getName().equals(name)){
@@ -71,13 +74,23 @@ public class VariableManager {
 		return position;
 	}
 	public String getName(int type, int id){
+		if(type > TYPES || id >= variableArray.get(type).size()){
+			return null;
+		}
 		return variableArray.get(type).get(id).getName();
 	}
 	
 	public Object getValue(int type, int id){
+		if(type > TYPES || id >= variableArray.get(type).size()){
+			return null;
+		}
 		return variableArray.get(type).get(id).getValue();
 	}
 	public Object getValue(int type, String name){
+		int id = getID(type, name);
+		if(type > TYPES || id == 0){
+			return null;
+		}
 		return variableArray.get(type).get(getID(type, name)).getValue();
 	}
 	
@@ -100,11 +113,18 @@ public class VariableManager {
 		return getValue(type, name).toString();
 	}
 	public <T> void setValue(int type, int id, T t){
+		if(type > TYPES || id >= variableArray.get(type).size()){
+			System.out.println("Failed to set");
+			return;
+		}
 		variableArray.get(type).get(id).setValue(t);
 	}
+	public <T> void setValue(int type, String name, T t){
+		variableArray.get(type).get(getID(type, name)).setValue(t);
+	}
 	
-	public boolean save(int profileID){
-		String filepath = String.format("%s%d%s", SAV_NAME, profileID, SAV_TYPE);
+	public boolean save(int id){
+		String filepath = String.format("%s%d%s", SAV_NAME, id, SAV_TYPE);
 		return save(filepath);
 	}
 	public boolean save(String file){
@@ -120,8 +140,8 @@ public class VariableManager {
 			OutputStream out = new FileOutputStream(f);
 			DataOutputStream dos = new DataOutputStream(out);
 			for(int i=0; i<TYPES; i++){
-				List<Variable<?>> tempArray = variableArray.get(i);
-				int typeSize = getSaveSize(tempArray);
+				List<JixelVariable<?>> tempArray = variableArray.get(i);
+				int typeSize = tempArray.size();
 				dos.writeInt(typeSize);
 				for(int j=0; j<typeSize; j++){
 					dos.writeUTF(tempArray.get(j).getName());
@@ -147,29 +167,19 @@ public class VariableManager {
 		}
 	}
 	
-	private int getSaveSize(List<Variable<?>> tempArray){
-		int size=0;
-		for(int i=0; i<tempArray.size(); i++){
-			if(tempArray.get(i).getSave()){
-				size++;
-			}
-		}
-		return size;
-	}
-	
 	/**
 	 * Loads a profile by its id
-	 * Warning: Will clear all variables, toSave or not
+	 * Warning: Will clear all variables
 	 * @param profileID
 	 * @return whether the profile loaded correctly
 	 */
-	public boolean load(int profileID){
-		String filepath = String.format("%s%d%s", SAV_NAME, profileID, SAV_TYPE);
+	public boolean load(int id){
+		String filepath = String.format("%s%d%s", SAV_NAME, id, SAV_TYPE);
 		return load(filepath);
 	}
 	/**
 	 * Loads a file with a given name
-	 * Warning: Will clear all variables, toSave or not.
+	 * Warning: Will clear all variables
 	 * @param file - File name in /profiles/
 	 * @return whether the profile loaded correctly
 	 */
@@ -192,13 +202,13 @@ public class VariableManager {
 					String name = dis.readUTF();
 					switch(i){
 						case 0:
-							newVar(i, name, dis.readBoolean(), true);
+							newVar(i, name, dis.readBoolean());
 							break;
 						case 1:
-							newVar(i, name, dis.readInt(), true);
+							newVar(i, name, dis.readInt());
 							break;
 						case 2:
-							newVar(i, name, dis.readUTF(), true);
+							newVar(i, name, dis.readUTF());
 							break;
 					}
 				}
@@ -210,12 +220,9 @@ public class VariableManager {
 		}
 	}
 	
-	/**
-	 * Warning: Will clear all variables, toSave or not
-	 */
 	private void clearVars(){
 		for(int i=0; i<TYPES; i++){
-			List<Variable<?>> tempArray = variableArray.get(i);
+			List<JixelVariable<?>> tempArray = variableArray.get(i);
 			while(tempArray.size() > 0){
 				variableArray.get(i).remove(0);
 			}
