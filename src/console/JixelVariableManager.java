@@ -1,126 +1,47 @@
 package console;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import math.JixelMath;
+import java.util.HashMap;
+
+import stage.JixelGame;
 
 public class JixelVariableManager {
-
-	private final int TYPES = 3;
-	public int FLAG = 0;
-	public int INT = 1;
-	public int STRING = 2;
 	
 	private final String SAV_DIR = "profiles";
 	private final String SAV_NAME = "char";
 	private final String SAV_TYPE = ".sav";
 
-	private List<List<JixelVariable<?>>> variableArray = new ArrayList<List<JixelVariable<?>>>();
+	private HashMap<String, Object> varMap = new HashMap<String, Object>();
 
-	public JixelVariableManager() {
-		for(int i=0; i<TYPES; i++){
-			variableArray.add(new ArrayList<JixelVariable<?>>());
-		}
-		//Creates starting values so these sections can't be entirely missing to help the save/load process
-		newVar(0, "Null", false);
-		newVar(1, "Null", 0);
-		newVar(2, "Null", "Null");
-	}
-
-	public <T> int newVar(int type, String name, T value) {
-		if(!JixelMath.isStartNum(name)){
-			List<JixelVariable<?>> array = variableArray.get(type);
-			for(int i=0; i<array.size(); i++){
-				if(array.get(i).getName().equals(name)){
-					System.out.println("Invalid variable name. Name already exists.");
-					return 0;
-				}
-			}
-			int id = array.size();
-			array.add(new JixelVariable<T>(id, name, value));
-			return id;
-		}else{
-			System.out.println("Invalid variable name. Can not start with a number.");
-			return 0;
-		}
-	}
-	
-	public String toString(int type, String name){
-		return toString(type, getID(type, name));
-	}
-	public <T> String toString(int type, int id){
-		if(type > TYPES || id >= variableArray.get(type).size()){
-			return null;
-		}
-		return variableArray.get(type).get(id).toString();
-	}
-	public int getID(int type, String name){
-		List<JixelVariable<?>> array = variableArray.get(type);
-		int position = 0;
-		for(int i=0; i<array.size(); i++){
-			if(array.get(i).getName().equals(name)){
-				position = i;
-				break;
-			}
-		}
-		return position;
-	}
-	public String getName(int type, int id){
-		if(type > TYPES || id >= variableArray.get(type).size()){
-			return null;
-		}
-		return variableArray.get(type).get(id).getName();
-	}
-	
-	public Object getValue(int type, int id){
-		if(type > TYPES || id >= variableArray.get(type).size()){
-			return null;
-		}
-		return variableArray.get(type).get(id).getValue();
-	}
-	public Object getValue(int type, String name){
-		int id = getID(type, name);
-		if(type > TYPES || id == 0){
-			return null;
-		}
-		return variableArray.get(type).get(getID(type, name)).getValue();
-	}
-	
-	public int getValueInt(int type, int id){
-		return (Integer)getValue(type, id);
-	}
-	public int getValueInt(int type, String name){
-		return (Integer)getValue(type, name);
-	}
-	public boolean getValueBoolean(int type, int id){
-		return (Boolean)getValue(type, id);
-	}
-	public boolean getValueBoolean(int type, String name){
-		return (Boolean)getValue(type, name);
-	}
-	public String getValueString(int type, int id){
-		return getValue(type, id).toString();
-	}
-	public String getValueString(int type, String name){
-		return getValue(type, name).toString();
-	}
-	public <T> void setValue(int type, int id, T t){
-		if(type > TYPES || id >= variableArray.get(type).size()){
-			System.out.println("Failed to set");
+	public <T> void newVar(String name, T value) {
+		if(varMap.containsKey(name)){
+			System.out.println("A variable with that name already exists");
 			return;
 		}
-		variableArray.get(type).get(id).setValue(t);
+		varMap.put(name, value);
 	}
-	public <T> void setValue(int type, String name, T t){
-		variableArray.get(type).get(getID(type, name)).setValue(t);
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getValue(String name){
+		Object o = varMap.get(name);
+		if(o == null){
+			JixelGame.getConsole().print("No such variable exists.");
+		}
+		return (T) o;
+	}
+	
+	public <T> void setValue(String name, T value){
+		if(!varMap.containsKey(name)){
+			JixelGame.getConsole().print("No such variable detected so it was created.");
+		}
+		varMap.put(name, value);
 	}
 	
 	public boolean save(int id){
@@ -138,28 +59,10 @@ public class JixelVariableManager {
 				f.createNewFile();
 			}
 			OutputStream out = new FileOutputStream(f);
-			DataOutputStream dos = new DataOutputStream(out);
-			for(int i=0; i<TYPES; i++){
-				List<JixelVariable<?>> tempArray = variableArray.get(i);
-				int typeSize = tempArray.size();
-				dos.writeInt(typeSize);
-				for(int j=0; j<typeSize; j++){
-					dos.writeUTF(tempArray.get(j).getName());
-					switch(i){
-						case 0:
-							dos.writeBoolean(getValueBoolean(i, j));
-							break;
-						case 1:
-							dos.writeInt(getValueInt(i, j));
-							break;
-							
-						case 2:
-							dos.writeUTF(getValueString(i, j));
-							break;							
-					}
-					
-				}
-			}
+			ObjectOutputStream oos = new ObjectOutputStream(out);
+			oos.writeObject(varMap);
+			oos.flush();
+			oos.close();
 			out.close();
 			return true;
 		}catch(IOException e){
@@ -183,6 +86,7 @@ public class JixelVariableManager {
 	 * @param file - File name in /profiles/
 	 * @return whether the profile loaded correctly
 	 */
+	@SuppressWarnings("unchecked")
 	public boolean load(String file){
 		File dir = new File(SAV_DIR);
 		if(!dir.exists()){
@@ -193,39 +97,19 @@ public class JixelVariableManager {
 			if(!f.exists()){
 				return false;
 			}
-			clearVars();
+			varMap.clear();
 			InputStream in = new FileInputStream(f);
-			DataInputStream dis = new DataInputStream(in);
-			for(int i=0; i<TYPES; i++){
-				int typeSize = dis.readInt();
-				for(int j=0; j<typeSize; j++){
-					String name = dis.readUTF();
-					switch(i){
-						case 0:
-							newVar(i, name, dis.readBoolean());
-							break;
-						case 1:
-							newVar(i, name, dis.readInt());
-							break;
-						case 2:
-							newVar(i, name, dis.readUTF());
-							break;
-					}
-				}
+			ObjectInputStream ois = new ObjectInputStream(in);
+			try {
+				varMap = (HashMap<String,Object>)ois.readObject();
+			} catch (ClassNotFoundException e) {
+				return false;
 			}
+			ois.close();
 			in.close();
 			return true;
 		}catch(IOException e){
 			return false;
-		}
-	}
-	
-	private void clearVars(){
-		for(int i=0; i<TYPES; i++){
-			List<JixelVariable<?>> tempArray = variableArray.get(i);
-			while(tempArray.size() > 0){
-				variableArray.get(i).remove(0);
-			}
 		}
 	}
 }
