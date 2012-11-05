@@ -2,22 +2,22 @@ package stage;
 
 import java.awt.Canvas;
 
-import console.Console;
-import console.VariableManager;
-import gui.Screen;
+import console.JixelConsole;
+import console.JixelVariableManager;
+import gui.JixelScreen;
 
 @SuppressWarnings("serial")
 public class JixelGame extends Canvas{
 
-	public static VariableManager vm = new VariableManager();
-	private static Console con = new Console(vm);
+	public static JixelVariableManager vm = new JixelVariableManager();
+	private static JixelConsole con = new JixelConsole(vm);
 	
 	public int width;
 	public int height;
 	public int scale;
 	public int tileSize;
 	
-	private Screen screen;
+	private JixelScreen screen;
 	public final String GAME_TITLE;
 	
 	public JixelGame(String title, int width, int height, int scale, int tileSize){
@@ -27,7 +27,7 @@ public class JixelGame extends Canvas{
 		this.scale = scale;
 		this.tileSize = tileSize;
 		
-		screen = new Screen(width, height, tileSize);
+		screen = new JixelScreen(width, height, tileSize);
 	}
 	
 	public String getTitle(){
@@ -45,10 +45,10 @@ public class JixelGame extends Canvas{
 	public int getTileSize(){
 		return tileSize;
 	}
-	public Screen getScreen(){
+	public JixelScreen getScreen(){
 		return screen;
 	}
-	public static Console getConsole(){
+	public static JixelConsole getConsole(){
 		return con;
 	}
 
