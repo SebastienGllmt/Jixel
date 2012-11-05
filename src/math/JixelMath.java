@@ -10,7 +10,12 @@ public class JixelMath {
 		return false;
 	}
 	public static boolean isNum(String s){
-		for(int i=0; i<s.length(); i++){
+		int i=0;
+		char firstChar = s.charAt(0);
+		if(firstChar=='-'){
+			i++;
+		}
+		for(; i<s.length(); i++){
 			byte b = (byte)s.charAt(i);
 			if(b<48 || b>57){
 				return false;
