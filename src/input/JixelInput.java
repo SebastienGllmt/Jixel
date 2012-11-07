@@ -8,34 +8,52 @@ import stage.JixelGame;
 public class JixelInput implements KeyListener {
 
 	private boolean[] keys = new boolean[KeyEvent.KEY_LAST];
-	public boolean up, down, left, right, enter, z, x;
-	public final char ENTER = KeyEvent.VK_ENTER;
+	public boolean up=false, down=false, left=false, right=false, enter=false;
+	public boolean key1=false, key2=false, key3=false, consoleKey=false;
 
 	private int maxLength;
 	private final int LAST_KEYS_LENGTH = 16;
 
-	private char breakKey = KeyEvent.VK_ENTER;
-	public char lastKey = 0;
+	private int breakKey = KeyEvent.VK_ENTER;
+	private char lastKey = 0;
 	private boolean reading = false;
+	
+	private JixelGame game;
 
-	public JixelInput() {
-		JixelGame.vm.newVar("Jixel_keyMsg", "");
-		JixelGame.vm.newVar("Jixel_lastKeys", "");
+	public JixelInput(JixelGame game) {
+		this.game = game;
+		game.getVM().newVar("Jixel_upKey", KeyEvent.VK_UP);
+		game.getVM().newVar("Jixel_downKey", KeyEvent.VK_DOWN);
+		game.getVM().newVar("Jixel_leftKey", KeyEvent.VK_LEFT);
+		game.getVM().newVar("Jixel_rightKey", KeyEvent.VK_RIGHT);
+		game.getVM().newVar("Jixel_enterKey", KeyEvent.VK_ENTER);
+		game.getVM().newVar("Jixel_key1", KeyEvent.VK_Z);
+		game.getVM().newVar("Jixel_key2", KeyEvent.VK_X);
+		game.getVM().newVar("Jixel_key3", KeyEvent.VK_A);
+		game.getVM().newVar("Jixel_consoleKey", 192);
+		game.getVM().newVar("Jixel_keyMsg", "");
+		game.getVM().newVar("Jixel_lastKeys", "");
 	}
 
 	public void updateKeyboard() {
-		z = keys[KeyEvent.VK_Z];
-		x = keys[KeyEvent.VK_X];
-		enter = keys[KeyEvent.VK_ENTER];
-		up = keys[KeyEvent.VK_UP];
-		down = keys[KeyEvent.VK_DOWN];
-		left = keys[KeyEvent.VK_LEFT];
-		right = keys[KeyEvent.VK_RIGHT];
+		up = keys[game.getVM().getValue("Jixel_upKey")];
+		down = keys[game.getVM().getValue("Jixel_downKey")];
+		left = keys[game.getVM().getValue("Jixel_leftKey")];
+		right = keys[game.getVM().getValue("Jixel_rightKey")];
+		key1 = keys[game.getVM().getValue("Jixel_key1")];
+		key2 = keys[game.getVM().getValue("Jixel_key2")];
+		key3 =  keys[game.getVM().getValue("Jixel_key3")];
+		enter = keys[game.getVM().getValue("Jixel_enterKey")];
+		consoleKey = keys[game.getVM().getValue("Jixel_consoleKey")];
 	}
 
 	@Override
 	public void keyPressed(KeyEvent evt) {
 		keys[evt.getKeyCode()] = true;
+		int consoleKey = game.getVM().getValue("Jixel_consoleKey");
+		if(consoleKey == evt.getKeyCode()){
+			game.getConsole().setState(!game.getConsole().isRunning());
+		}
 	}
 
 	@Override
@@ -53,52 +71,52 @@ public class JixelInput implements KeyListener {
 		if (lastKey == breakKey) {
 			reading = false;
 		} else {
-			if((lastKey < 32 || lastKey > 127)){
+			if ((lastKey < 32 || lastKey > 127)) {
 				return;
 			}
 			addInput();
 		}
 	}
-	
-	private void updateLastKeys(){
-		String prevString = JixelGame.vm.getValue("Jixel_lastKeys");
-		if(prevString.length() < LAST_KEYS_LENGTH){
-			JixelGame.vm.setValue("Jixel_lastKeys", prevString + lastKey);
-		}else{
-			JixelGame.vm.setValue("Jixel_lastKeys", prevString.substring(1, LAST_KEYS_LENGTH-1) + lastKey);
+
+	private void updateLastKeys() {
+		String prevString = game.getVM().getValue("Jixel_lastKeys");
+		if (prevString.length() < LAST_KEYS_LENGTH) {
+			game.getVM().setValue("Jixel_lastKeys", prevString + lastKey);
+		} else {
+			game.getVM().setValue("Jixel_lastKeys", prevString.substring(1, LAST_KEYS_LENGTH - 1) + lastKey);
 		}
 	}
-	
-	private void addInput(){
-		String prevString = JixelGame.vm.getValue("Jixel_keyMsg");
+
+	private void addInput() {
+		String prevString = game.getVM().getValue("Jixel_keyMsg");
 		if (lastKey != (char) 8) {
 			if (prevString.length() < maxLength) {
-				JixelGame.vm.setValue("Jixel_keyMsg", prevString + lastKey);
+				game.getVM().setValue("Jixel_keyMsg", prevString + lastKey);
 			}
 		} else {
 			if (prevString.length() > 0) {
-				JixelGame.vm.setValue("Jixel_keyMsg", prevString.substring(0, prevString.length() - 1));
+				game.getVM().setValue("Jixel_keyMsg", prevString.substring(0, prevString.length() - 1));
 			}
 		}
 	}
 
-	public void startMessage(char breakKey, int maxLength) {
+	public void startMessage(int breakKey, int maxLength) {
 		this.breakKey = breakKey;
 		reading = true;
 		this.maxLength = maxLength;
-		JixelGame.vm.setValue("Jixel_keyMsg", "");
+		game.getVM().setValue("Jixel_keyMsg", "");
 	}
 
-	public String lastKeys(){
-		return JixelGame.vm.getValue("Jixel_lastKeys");
+	public String lastKeys() {
+		return game.getVM().getValue("Jixel_lastKeys");
 	}
-	
+
 	public boolean isReading() {
 		return reading;
 	}
 
 	public String getMessage() {
-		return JixelGame.vm.getValue("Jixel_keyMsg");
+		return game.getVM().getValue("Jixel_keyMsg");
 	}
 
 }
