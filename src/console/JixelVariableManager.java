@@ -17,12 +17,17 @@ public class JixelVariableManager {
 	private final String SAV_DIR = "profiles";
 	private final String SAV_NAME = "char";
 	private final String SAV_TYPE = ".sav";
+	private JixelGame game;
 
 	private HashMap<String, Object> varMap = new HashMap<String, Object>();
 
+	public JixelVariableManager(JixelGame game){
+		this.game = game;
+	}
+	
 	public <T> void newVar(String name, T value) {
 		if(varMap.containsKey(name)){
-			JixelGame.getConsole().print("A variable with that name already exists");
+			game.getConsole().print("A variable with the name " + name + " exists.");
 			return;
 		}
 		varMap.put(name, value);
@@ -32,15 +37,20 @@ public class JixelVariableManager {
 	public <T> T getValue(String name){
 		Object o = varMap.get(name);
 		if(o == null){
-			JixelGame.getConsole().print("No such variable exists.");
+			game.getConsole().print("No such variable with the name " + name + " exists.");
 		}
 		return (T) o;
 	}
 	public <T> void setValue(String name, T value){
 		if(!varMap.containsKey(name)){
-			JixelGame.getConsole().print("No such variable detected so it was created.");
+			game.getConsole().print("No such variable with the name " + name + " exists.");
+		}else{
+			varMap.put(name, value);
 		}
-		varMap.put(name, value);
+	}
+	
+	public boolean exists(String name){
+		return varMap.containsKey(name);
 	}
 	
 	public boolean save(int id){
@@ -59,15 +69,14 @@ public class JixelVariableManager {
 			}
 			OutputStream out = new FileOutputStream(f);
 			ObjectOutputStream oos = new ObjectOutputStream(out);
-			setValue("paused", true);
+			setValue("Jixel_paused", true);
 			oos.writeObject(varMap);
 			oos.flush();
 			oos.close();
-			out.close();
-			setValue("paused", false);
+			setValue("Jixel_paused", false);
 			return true;
 		}catch(IOException e){
-			setValue("paused", false);
+			setValue("Jixel_paused", false);
 			return false;
 		}
 	}
@@ -101,19 +110,19 @@ public class JixelVariableManager {
 			}
 			InputStream in = new FileInputStream(f);
 			ObjectInputStream ois = new ObjectInputStream(in);
-			setValue("paused", true);
+			setValue("Jixel_paused", true);
 			varMap.clear();
 			try {
 				varMap = (HashMap<String,Object>)ois.readObject();
 			} catch (ClassNotFoundException e) {
+				ois.close();
 				return false;
 			}
 			ois.close();
-			in.close();
-			setValue("paused", false);
+			setValue("Jixel_paused", false);
 			return true;
 		}catch(IOException e){
-			setValue("paused", false);
+			setValue("Jixel_paused", false);
 			return false;
 		}
 	}
