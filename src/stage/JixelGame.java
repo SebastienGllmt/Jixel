@@ -15,9 +15,10 @@ import gui.JixelScreen;
 @SuppressWarnings("serial")
 public class JixelGame extends Canvas{
 
-	public static JixelVariableManager vm = new JixelVariableManager();
-	private static JixelConsole con = new JixelConsole(vm);
+	private JixelVariableManager vm;
+	private JixelConsole con;
 	
+	public boolean playing = true;
 	public int width;
 	public int height;
 	public int scale;
@@ -36,7 +37,7 @@ public class JixelGame extends Canvas{
 	private int updates;
 	long now;
 	
-	private JixelInput input = new JixelInput();
+	private JixelInput input;
 	
 	public JixelGame(String title, int width, int height, int scale, int tileSize){
 		GAME_TITLE = title;
@@ -57,7 +58,13 @@ public class JixelGame extends Canvas{
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 		
+		vm = new JixelVariableManager(this);
+		
+		input = new JixelInput(this);
+		con = new JixelConsole(this);
+		
 		vm.newVar("Jixel_paused", false);
+		 
 		screen = new JixelScreen(width, height, tileSize);
 		createBufferStrategy(3);
 		bs = getBufferStrategy();
@@ -116,8 +123,11 @@ public class JixelGame extends Canvas{
 	public JixelScreen getScreen(){
 		return screen;
 	}
-	public static JixelConsole getConsole(){
+	public JixelConsole getConsole(){
 		return con;
+	}
+	public synchronized JixelVariableManager getVM(){
+		return vm;
 	}
 	public boolean getPaused(){
 		return vm.getValue("Jixel_paused");
@@ -125,7 +135,7 @@ public class JixelGame extends Canvas{
 	public BufferStrategy getBuffer(){
 		return bs;
 	}
-	public JixelInput keys(){
+	public synchronized JixelInput keys(){
 		return input;
 	}
 
