@@ -15,7 +15,6 @@ public class JixelConsole implements Runnable {
 	public JixelConsole(JixelGame game){
 		this.game = game;
 		thread = new Thread(this, "Console");
-		thread.start();
 	}
 
 	public void print(String message) {
@@ -90,6 +89,11 @@ public class JixelConsole implements Runnable {
 	
 	public void setState(boolean state){
 		isRunning = state;
+		if(isRunning){
+			if(!thread.isAlive()){
+				thread.start();
+			}
+		}
 	}
 	public void shutdown(){
 		isActive=false;
@@ -98,8 +102,13 @@ public class JixelConsole implements Runnable {
 	@Override
 	public void run() {
 		while(isActive){
-			game.keys().updateKeyboard();
-			isRunning = game.keys().consoleKey;
+			synchronized(game){
+				try {
+					game.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
 			while (isRunning) {
 				/*
 				if (scan.hasNextLine()) {
