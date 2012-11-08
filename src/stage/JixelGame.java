@@ -59,13 +59,13 @@ public class JixelGame extends Canvas{
 		frame.setVisible(true);
 		
 		vm = new JixelVariableManager(this);
-		
 		input = new JixelInput(this);
+		
 		con = new JixelConsole(this);
 		
 		vm.newVar("Jixel_paused", false);
 		 
-		screen = new JixelScreen(width, height, tileSize);
+		screen = new JixelScreen(this, width, height, tileSize);
 		createBufferStrategy(3);
 		bs = getBufferStrategy();
 		
@@ -120,17 +120,17 @@ public class JixelGame extends Canvas{
 	public int getTileSize(){
 		return tileSize;
 	}
-	public JixelScreen getScreen(){
+	public synchronized JixelScreen getScreen(){
 		return screen;
 	}
-	public JixelConsole getConsole(){
+	public synchronized JixelConsole getConsole(){
 		return con;
 	}
 	public synchronized JixelVariableManager getVM(){
 		return vm;
 	}
 	public boolean getPaused(){
-		return vm.getValue("Jixel_paused");
+		return getVM().getValue("Jixel_paused");
 	}
 	public BufferStrategy getBuffer(){
 		return bs;
