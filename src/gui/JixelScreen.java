@@ -6,6 +6,7 @@ import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.List;
 import java.util.Random;
 
 import stage.JixelGame;
@@ -14,6 +15,7 @@ public class JixelScreen {
 
 	private int width, height;
 	private int tilesX, tilesY;
+	private int tileSize;
 	private int FIXSHIFT;
 	private BufferedImage image;
 	public int[] pixels;
@@ -28,6 +30,7 @@ public class JixelScreen {
 		this.game = game;
 		this.width = width;
 		this.height = height;
+		this.tileSize = tileSize;
 		tilesX = width/tileSize;
 		tilesY = height/tileSize;
 		FIXSHIFT = (int) (Math.log(tileSize)/Math.log(2));
@@ -56,16 +59,25 @@ public class JixelScreen {
 	
 	public void update(){
 		Graphics2D g = (Graphics2D)game.getBuffer().getDrawGraphics();
-		
 		if(game.getConsole().isRunning()){
 			Composite alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float).5);
 			g.setComposite(alpha);
+			
 		}
 		
 		g.setColor(Color.BLACK);
 		g.fillRect(0, 0, game.getWidth(), game.getHeight());
 		g.drawImage(image, 0, 0, game.getWidth(), game.getHeight(), null);
-		
+		if(game.getConsole().isRunning()){
+			g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float)1));
+			g.setColor(Color.WHITE);
+			g.drawLine(tileSize, height-tileSize,  width-tileSize, height-tileSize);
+			List<String> messageList = game.getConsole().getMessageList();
+			for(int i=0; i<messageList.size(); i++){
+				g.drawString(messageList.get(i), tileSize+(tileSize/2), height-tileSize-(tileSize/2)-(i*24));
+			}
+			g.drawString(game.getInput().getConsoleMsg(), tileSize+(tileSize/2), height-(tileSize/2)+6);
+		}
 		g.dispose();
 		game.getBuffer().show();
 	}
