@@ -35,11 +35,13 @@ public class JixelVariableManager {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T getValue(String name){
-		Object o = varMap.get(name);
-		if(o == null){
+		if(varMap.containsKey(name)){
+			Object o = varMap.get(name);
+			return (T)o;
+		}else{
 			game.getConsole().print("No such variable with the name " + name + " exists.");
+			return null;
 		}
-		return (T) o;
 	}
 	public <T> void setValue(String name, T value){
 		if(!varMap.containsKey(name)){
@@ -49,7 +51,7 @@ public class JixelVariableManager {
 		}
 	}
 	
-	public boolean exists(String name){
+	public boolean contains(String name){
 		return varMap.containsKey(name);
 	}
 	
