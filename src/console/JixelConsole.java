@@ -11,15 +11,13 @@ public class JixelConsole implements Runnable {
 
 	private Thread thread;
 	private boolean isRunning = false;
-	private JixelGame game;
 	private List<String> messageList = new ArrayList<String>();
 	private int logHeight;
 
-	public JixelConsole(JixelGame game) {
-		this.game = game;
+	public JixelConsole() {
 		thread = new Thread(this, "Console");
 		thread.start();
-		this.logHeight = (game.getHeight() - 3 * (game.tileSize)) / 24;
+		this.logHeight = (JixelGame.getScreen().getHeight() - 3 * (JixelGame.getScreen().getTileSize())) / 24;
 	}
 
 	public void print(String message) {
@@ -40,7 +38,7 @@ public class JixelConsole implements Runnable {
 		if (input.length == 1) {
 			answer = String.valueOf((JixelGame.getVM().getValue(input[0])));
 			if (!answer.equals("null")) {
-				print("Value of " + input[0] + ": " + answer);
+				answer = "Value of " + input[0] + ": " + answer;
 			}
 		} else if (input.length == 2) {
 			answer = "Failed to get";
@@ -63,40 +61,31 @@ public class JixelConsole implements Runnable {
 					answer = "Console stopped";
 				}
 			}
-			print(answer);
 		} else if (input.length == 3) {
-			if (JixelGame.getVM().contains(input[1])) {
-				Class<?> clazz = JixelGame.getVM().getValue(input[1]).getClass();
-				if (clazz.equals(String.class)) {
-					JixelGame.getVM().setValue(input[1], input[2]);
-					answer = "Value of " + input[1] + " set to " + input[2];
-				} else {
-					Method[] methods = clazz.getMethods();
-					for (Method method : methods) {
-						if (method.getName().startsWith("parse")) {
-							try {
-								JixelGame.getVM().setValue(input[1], method.invoke(clazz, input[2]));
-								answer = "Value of " + input[1] + " set to " + input[2];
-							} catch (IllegalArgumentException e) {
-								answer = "Illegal Argument Exception: Failed to set value of " + input[1] + " to " + input[2];
-							} catch (IllegalAccessException e) {
-								answer = "Illegal Access Exception: Failed to set value of " + input[1] + " to " + input[2];
-							} catch (InvocationTargetException e) {
-								answer = "Invocation Target Exception: Failed to set value of " + input[1] + " to " + input[2];
-							}
-							break;
-						}
+			if(input[0].equals("set")){
+				if (JixelGame.getVM().contains(input[1])) {
+					if(JixelGame.getVM().setValue(input[1], input[2])){
+						answer = "Value of " + input[1] + " set to " + input[2];
+					}else{
+						answer = null;
 					}
+				} else {
+					answer = "Failed to set " + input[1] + " to " + input[2];
 				}
-
-			} else {
-				answer = "Value failed to set";
 			}
+		}
+		if(answer != null){
 			print(answer);
 		}
 		return;
 	}
 
+	public String getConsoleMsg(){
+		return JixelGame.getInput().getConsoleMsg();
+	}
+	public void startConsoleMsg(int maxLength){
+		JixelGame.getInput().startConsoleMsg(maxLength);
+	}
 	public boolean isRunning() {
 		return isRunning;
 	}
@@ -121,14 +110,13 @@ public class JixelConsole implements Runnable {
 				}
 			}
 			while (isRunning) {
-				if (!game.getInput().isReading()) {
-					String msg = game.getInput().getConsoleMsg();
+				if (!JixelGame.getInput().isReading()) {
+					String msg = getConsoleMsg();
 					if (!msg.isEmpty()) {
 						String[] commands = msg.split(" ");
 						cInput(commands);
 					}
-					int enterKey = JixelGame.getVM().getValue("Jixel_enterKey");
-					game.getInput().startConsoleMsg(enterKey, 32);
+					startConsoleMsg(32);
 				}
 			}
 		}
