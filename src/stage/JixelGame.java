@@ -4,6 +4,7 @@ import input.JixelInput;
 
 import console.JixelConsole;
 import console.JixelVariableManager;
+import entity.JixelEntityManager;
 import gui.JixelScreen;
 
 public class JixelGame {
@@ -13,6 +14,8 @@ public class JixelGame {
 	private static JixelScreen screen;
 	private static JixelInput input;
 	private static JixelTimer timer;
+	
+	private static JixelEntityManager entities = new JixelEntityManager();
 
 	public boolean playing = true;
 	public final String GAME_TITLE;
@@ -58,6 +61,10 @@ public class JixelGame {
 	
 	public static JixelTimer getTimer(){
 		return timer;
+	}
+	
+	public static JixelEntityManager getEntityList(){
+		return entities;
 	}
 
 }
