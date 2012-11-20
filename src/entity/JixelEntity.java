@@ -6,26 +6,57 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import stage.JixelGame;
+
 public class JixelEntity{
 	
+	private String name;
 	private int x, y;
 	private int width, height;
-	public int speed;
+	private int speed;
+	private boolean controllable;
+	
 	private BufferedImage img;
 	
-	public JixelEntity(String filepath, int x, int y, int speed){
+	public JixelEntity(final String PATH, String name, int x, int y, int speed, boolean controllable){
+		this.name = name;
 		this.x = x;
 		this.y = y;
 		this.speed = speed;
+		this.controllable = controllable;
 		try {
-			this.img = ImageIO.read(new File(filepath));
+			this.img = ImageIO.read(new File(PATH));
 			width = img.getWidth();
 			height = img.getHeight();
 		} catch (IOException e) {
+			System.out.println("Failed to read entity at " + PATH);
 			e.printStackTrace();
 		}
 	}
 	
+	public void update(){
+		if(controllable){
+			if (JixelGame.getInput().right) {
+				setX(x+speed);
+			}
+			if (JixelGame.getInput().left) {
+				setX(x-speed);
+			}
+			if (JixelGame.getInput().up) {
+				setY(y-speed);
+			}
+			if (JixelGame.getInput().down) {
+				setY(y+speed);
+			}
+		}
+	}
+	
+	public String getName(){
+		return name;
+	}
+	public void setName(String name){
+		this.name = name;
+	}
 	public int getX(){
 		return x;
 	}
