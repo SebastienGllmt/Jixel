@@ -5,11 +5,11 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -27,14 +27,17 @@ public class JixelScreen extends Canvas {
 	private int tilesX, tilesY;
 	private int tileSize;
 	private int FIXSHIFT;
+	
 	private JFrame frame;
 	private BufferStrategy bs;
 	private BufferedImage image;
+	private JixelSprite tileMap = new JixelSprite("/spritesheet.png", 32, 32);
 	public int[] pixels;
 	public int[][] tiles;
 	
+	private Font font = new Font("Courier", Font.PLAIN, 12);
+	
 	JixelEntity lockedEntity;
-	List<JixelEntity> entityList = new ArrayList<JixelEntity>();
 	Random rand = new Random();
 	
 	public JixelScreen(String title, int width, int height, int scale, int tileSize){
@@ -66,13 +69,13 @@ public class JixelScreen extends Canvas {
 		pixels = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
 		tiles = new int[tilesY][tilesX];
 		
-		randomize();
-		
+		requestFocus();
 	}
 	
 	public void lockOn(JixelEntity entity){
 		lockedEntity = entity;
 	}
+	
 	
 	public void clear(){
 		for(int i=0; i<pixels.length; i++){
@@ -80,19 +83,12 @@ public class JixelScreen extends Canvas {
 		}
 	}
 	
-	public void randomize(){
-		for(int i=0; i<tilesY; i++){
-			for(int j=0; j<tilesX; j++){
-				tiles[i][j] = rand.nextInt(0xFFFFFF);
-			}
-		}
-	}
-	
 	public void update(){
 		Graphics2D g = (Graphics2D)bs.getDrawGraphics();
-		
+		g.setFont(font);
 		g.drawImage(image, 0, 0, width, height, null);
 		
+		List<JixelEntity> entityList = JixelGame.getEntityList().getEntityList();
 		for(int i=0; i<entityList.size(); i++){
 			JixelEntity entity = entityList.get(i);
 			int screenX = JixelGame.getVM().getValue("Jixel_xOffset");
@@ -135,16 +131,15 @@ public class JixelScreen extends Canvas {
 			JixelGame.getVM().setValue("Jixel_yOffset", y);
 		}
 		for(int y=0; y<height; y++){
-			int yy = y + yOffset;
-			if(yy < 0){
-				yy = 0;
+			int yy = y - yOffset;
+			if(yy < 0 || yy >= height){
+				continue;
 			}
 			for(int x=0; x<width; x++){
-				int xx = x + xOffset;
-				if(xx < 0){
-					xx = 0;
+				int xx = x - xOffset;
+				if(xx >= 0 && xx < width){
+					pixels[xx + yy*width] = tileMap.loadImg(x >> FIXSHIFT, y >> FIXSHIFT, x&31, y&31);
 				}
-				pixels[x+y*width] = tiles[(yy >> FIXSHIFT)%(tilesY-1)][(xx >> FIXSHIFT)%(tilesX-1)];
 			}
 		}
 	}
@@ -167,9 +162,5 @@ public class JixelScreen extends Canvas {
 
 	public int getTileSize() {
 		return tileSize;
-	}
-
-	public void add(JixelEntity entity) {
-		entityList.add(entity);
 	}
 }
