@@ -8,7 +8,11 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.Set;
 
 import stage.JixelGame;
 
@@ -19,6 +23,7 @@ public class JixelVariableManager {
 	private final String SAV_TYPE = ".sav";
 
 	private HashMap<String, Object> varMap = new HashMap<String, Object>();
+	private HashMap<HashMap<String, Object>, HashMap<String, Method>> classMap = new HashMap<HashMap<String, Object>, HashMap<String, Method>>();
 
 	public <T> void newVar(String name, T value) {
 		if (varMap.containsKey(name)) {
@@ -26,6 +31,84 @@ public class JixelVariableManager {
 			return;
 		}
 		varMap.put(name, value);
+	}
+
+	public void newClass(Object o, Class<?> clazz) {
+		String className = clazz.getName();
+		if (classMap.containsKey(className)) {
+			JixelGame.getConsole().print("The class " + className + " is already visible to the console");
+			return;
+		}
+		HashMap<String, Object> classNameMap = new HashMap<String, Object>();
+		classNameMap.put(className, o);
+		HashMap<String, Method> classData = new HashMap<String, Method>();
+		Method[] methods = clazz.getMethods();
+		for (Method i : methods) {
+			String name = i.getName();
+			if(classData.containsKey(name)){
+				int j=2; //iterator in case method name already exists
+				while(classData.containsKey(name)){
+					name = i.getName() + j;
+					j++;
+				}
+				JixelGame.getConsole().print("Duplicate method name " + i.getName() + " detected and was renamed to " + name);
+			}
+			classData.put(name, i);
+		}
+
+		classMap.put(classNameMap, classData);
+	}
+
+	public boolean containsClass(String className) {
+		return getClass(className) != null;
+	}
+
+	private Object getClass(String className) {
+		Object o = null;
+		Set<HashMap<String, Object>> keySet = classMap.keySet();
+		for (HashMap<String, Object> map : keySet) {
+			o = map.get(className);
+			if (o != null) {
+				break;
+			}
+		}
+		return o;
+	}
+
+	public Object runMethod(String className, String methodName, Object... args) {
+		String errorMessage = "";
+		Object o = getClass(className);
+		if (o == null) {
+			return "No such class found: ";
+		}
+		try {
+			HashMap<String, Object> tempMap = new HashMap<String, Object>();
+			tempMap.put(className, o);
+			Method method = classMap.get(tempMap).get(methodName);
+			if (method == null) {
+				return "No such method found.";
+			}
+			Type[] parameters = method.getParameterTypes();
+			int paraAmount = parameters.length;
+			if (paraAmount == args.length) {
+				for(int i=0; i<args.length; i++){
+					args[i] = getValue((Class<?>)parameters[i], (String) args[i]);
+				}
+				return method.invoke(o, args);
+			} else if (paraAmount == 0) {
+				return method.invoke(o);
+			} else {
+				return "Invalid amount of parameters. Expected " + paraAmount;
+			}
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+			errorMessage = "Illegal Argument Exception: ";
+		} catch (IllegalAccessException e) {
+			errorMessage = "Illegal Access Exception: ";
+		} catch (InvocationTargetException e) {
+			errorMessage = "Invocation Target Exception: ";
+		}
+		return errorMessage + "Failed to run " + methodName + " in " + className;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -38,35 +121,41 @@ public class JixelVariableManager {
 			return null;
 		}
 	}
+	
+	private Object getValue(Class<?> clazz, String value){
+		if(clazz.equals(String.class)){
+			return value;
+		}if (clazz.equals(Byte.class)) {
+			return Byte.parseByte(value);
+		} else if (clazz.equals(Short.class)) {
+			return Short.parseShort(value);
+		} else if (clazz.equals(Integer.class)) {
+			return Integer.parseInt(value);
+		} else if (clazz.equals(Long.class)) {
+			return Long.parseLong(value);
+		} else if (clazz.equals(Float.class)) {
+			return Float.parseFloat(value);
+		} else if (clazz.equals(Double.class)) {
+			return Double.parseDouble(value);
+		} else if (clazz.equals(Boolean.class)) {
+			return Boolean.parseBoolean(value);
+		} else if (clazz.equals(Character.class)) {
+			return value.charAt(0);
+		} else {
+			JixelGame.getConsole().print("Uncompatible conversion from String to " + clazz.getClass().toString());
+			return null;
+		}
+	}
 
-	private boolean setValue(String name, String value){
+	public boolean setValue(String name, String value) {
 		Class<?> clazz = JixelGame.getVM().getValue(name).getClass();
-		try{
-			if(clazz.equals(Byte.class)){
-				varMap.put(name, Byte.parseByte(value));
-			}else if(clazz.equals(Short.class)){
-				varMap.put(name, Short.parseShort(value));
-			}else if(clazz.equals(Integer.class)){
-				varMap.put(name, Integer.parseInt(value));
-			}else if(clazz.equals(Long.class)){
-				varMap.put(name, Long.parseLong(value));
-			}else if(clazz.equals(Float.class)){
-				varMap.put(name, Float.parseFloat(value));
-			}else if(clazz.equals(Double.class)){
-				varMap.put(name, Double.parseDouble(value));
-			}else if(clazz.equals(Boolean.class)){
-				varMap.put(name, Boolean.parseBoolean(value));
-			}else if(clazz.equals(Character.class)){
-				varMap.put(name, value.charAt(0));
-			}else{
-				JixelGame.getConsole().print("The variable type of " + name + " can not be set");
-				return false;
-			}
-		} catch(NumberFormatException e){
-			JixelGame.getConsole().print("Invalid conversion from " + value + " to " + clazz.getName());
+		try {
+			varMap.put(name, getValue(clazz, value));
+			return true;
+		} catch (NumberFormatException e) {
+			JixelGame.getConsole().print("Incompatible conversion from " + value + " to " + clazz.getName());
 			return false;
 		}
-		return true;
 	}
 
 	public <T> boolean setValue(String name, T value) {
@@ -74,21 +163,19 @@ public class JixelVariableManager {
 			JixelGame.getConsole().print("No such variable with the name " + name + " exists.");
 			return false;
 		} else {
-			Class<?> mapClass = varMap.get(name).getClass();
+			Class<?> nameClass = varMap.get(name).getClass();
 			Class<?> valueClass = value.getClass();
-			if(mapClass.equals(String.class) || mapClass.equals(valueClass)){
+			if (nameClass.equals(valueClass)) {
 				varMap.put(name, value);
 				return true;
-			}else if(valueClass.equals(String.class)){
-				return setValue(name, value.toString());
 			}else{
-				JixelGame.getConsole().print("Uncompatible conversion from " + valueClass.toString() + " to " + mapClass.toString());
+				JixelGame.getConsole().print("Incompatible conversion from " + valueClass + " to " + nameClass);
 				return false;
 			}
 		}
 	}
 
-	public boolean contains(String name) {
+	public boolean containsVar(String name) {
 		return varMap.containsKey(name);
 	}
 
