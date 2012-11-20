@@ -1,7 +1,5 @@
 package console;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,14 +11,39 @@ public class JixelConsole implements Runnable {
 	private boolean isRunning = false;
 	private List<String> messageList = new ArrayList<String>();
 	private int logHeight;
+	private int maxWidth;
 
 	public JixelConsole() {
 		thread = new Thread(this, "Console");
 		thread.start();
-		this.logHeight = (JixelGame.getScreen().getHeight() - 3 * (JixelGame.getScreen().getTileSize())) / 24;
+		
+		logHeight = (JixelGame.getScreen().getHeight() - 3 * (JixelGame.getScreen().getTileSize())) / 24;
+		int tileSize = JixelGame.getScreen().getTileSize();
+		int width = JixelGame.getScreen().getWidth();
+		maxWidth = width - 3*tileSize;
 	}
 
 	public void print(String message) {
+		StringBuilder output = new StringBuilder();
+		String[] words = message.split(" ");
+		for(int i=0; i<words.length; i++){
+			if((words[i].length() + output.length()) * 8 > maxWidth){
+				break;
+			}
+			output.append(" " + words[i]);
+		}
+		addToList(output.toString());
+		if(message.length() > output.length()){
+			if(output.length() > 0){
+				print(message.substring(output.length()));
+			}else{
+				addToList(words[0]);
+				print(message.substring(words[0].length()));
+			}
+		}
+	}
+	
+	private void addToList(String message){
 		int size = messageList.size();
 		if (size - 1 == logHeight) {
 			messageList.remove(size - 1);
@@ -35,10 +58,38 @@ public class JixelConsole implements Runnable {
 	public void cInput(String[] input) {
 		String answer = "Unknown command.";
 
-		if (input.length == 1) {
-			answer = String.valueOf((JixelGame.getVM().getValue(input[0])));
-			if (!answer.equals("null")) {
+		if(input[0].equals("run") && input.length >= 2){
+			String[] path = input[1].split("\\.");
+			if(path.length == 3){
+				String className = path[0]+"."+path[1];
+				if(JixelGame.getVM().containsClass(className)){
+					Object ans;
+					if(input.length > 2){
+						Object[] parameters = new Object[input.length-2];
+						for(int i=2; i<input.length; i++){
+							parameters[i-2] = input[i];
+						}
+						ans = JixelGame.getVM().runMethod(className, path[2], parameters);
+					}else{
+						ans = JixelGame.getVM().runMethod(className, path[2], new Object());
+					}
+					if(ans == null){
+						answer = null;
+					}else{
+						answer = ans.toString();
+					}
+				}else{
+					answer = "The class " + className + " was not added to the Variable Manager";
+				}
+			}else{
+				answer = "Method path must follow the format package.class.method";
+			}
+		}else if (input.length == 1) {
+			if(JixelGame.getVM().containsVar(input[0])){
+				answer = String.valueOf((JixelGame.getVM().getValue(input[0])));
 				answer = "Value of " + input[0] + ": " + answer;
+			}else{
+				answer = "No such variable with the name " + input[0] + " exists.";
 			}
 		} else if (input.length == 2) {
 			answer = "Failed to get";
@@ -63,7 +114,7 @@ public class JixelConsole implements Runnable {
 			}
 		} else if (input.length == 3) {
 			if(input[0].equals("set")){
-				if (JixelGame.getVM().contains(input[1])) {
+				if (JixelGame.getVM().containsVar(input[1])) {
 					if(JixelGame.getVM().setValue(input[1], input[2])){
 						answer = "Value of " + input[1] + " set to " + input[2];
 					}else{
@@ -116,7 +167,7 @@ public class JixelConsole implements Runnable {
 						String[] commands = msg.split(" ");
 						cInput(commands);
 					}
-					startConsoleMsg(32);
+					startConsoleMsg((maxWidth/8)-1);
 				}
 			}
 		}
