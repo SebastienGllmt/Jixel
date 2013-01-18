@@ -18,6 +18,7 @@ public class JixelEntity{
 	
 	private BufferedImage img;
 	
+	//possibly inherit from JixelSprite?
 	public JixelEntity(final String PATH, String name, int x, int y, int speed, boolean controllable){
 		this.name = name;
 		this.x = x;
@@ -34,6 +35,7 @@ public class JixelEntity{
 		}
 	}
 	
+	//make this abstract later
 	public void update(){
 		if(controllable){
 			if (JixelGame.getInput().right) {
