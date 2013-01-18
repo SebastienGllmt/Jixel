@@ -23,7 +23,8 @@ public class JixelVariableManager {
 	private final String SAV_TYPE = ".sav";
 
 	private HashMap<String, Object> varMap = new HashMap<String, Object>();
-	private HashMap<HashMap<String, Object>, HashMap<String, Method>> classMap = new HashMap<HashMap<String, Object>, HashMap<String, Method>>();
+	private HashMap<String, Object> objectMap = new HashMap<String, Object>();
+	private HashMap<Object, HashMap<String, Method>> classMap = new HashMap<Object, HashMap<String, Method>>();
 
 	public <T> void newVar(String name, T value) {
 		if (varMap.containsKey(name)) {
@@ -35,12 +36,11 @@ public class JixelVariableManager {
 
 	public void newClass(Object o, Class<?> clazz) {
 		String className = clazz.getName();
-		if (classMap.containsKey(className)) {
+		if (objectMap.containsKey(className)) {
 			JixelGame.getConsole().print("The class " + className + " is already visible to the console");
 			return;
 		}
-		HashMap<String, Object> classNameMap = new HashMap<String, Object>();
-		classNameMap.put(className, o);
+		objectMap.put(className, o);
 		HashMap<String, Method> classData = new HashMap<String, Method>();
 		Method[] methods = clazz.getMethods();
 		for (Method i : methods) {
@@ -56,35 +56,21 @@ public class JixelVariableManager {
 			classData.put(name, i);
 		}
 
-		classMap.put(classNameMap, classData);
+		classMap.put(o, classData);
 	}
 
 	public boolean containsClass(String className) {
-		return getClass(className) != null;
-	}
-
-	private Object getClass(String className) {
-		Object o = null;
-		Set<HashMap<String, Object>> keySet = classMap.keySet();
-		for (HashMap<String, Object> map : keySet) {
-			o = map.get(className);
-			if (o != null) {
-				break;
-			}
-		}
-		return o;
+		return objectMap.containsKey(className);
 	}
 
 	public Object runMethod(String className, String methodName, Object... args) {
 		String errorMessage = "";
-		Object o = getClass(className);
+		Object o = objectMap.get(className);
 		if (o == null) {
 			return "No such class found: ";
 		}
 		try {
-			HashMap<String, Object> tempMap = new HashMap<String, Object>();
-			tempMap.put(className, o);
-			Method method = classMap.get(tempMap).get(methodName);
+			Method method = classMap.get(o).get(methodName);
 			if (method == null) {
 				return "No such method found.";
 			}
