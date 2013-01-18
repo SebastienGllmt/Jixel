@@ -14,13 +14,11 @@ public class JixelSprite {
 	
 	private int sheetWidth, sheetHeight;
 	public int[] sheetPixels;
-	private int[] tilePixels;
 	
 	public JixelSprite(String path, int width, int height){
 		this.PATH = path;
 		this.width = width;
 		this.height = height;
-		this.tilePixels = new int[width*height];
 		loadSheet();
 	}
 	
