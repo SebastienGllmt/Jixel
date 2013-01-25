@@ -83,7 +83,7 @@ public class JixelScreen extends Canvas {
 		}
 	}
 	
-	public void update(){
+	public void drawEntities(){
 		Graphics2D g = (Graphics2D)bs.getDrawGraphics();
 		g.setFont(font);
 		g.drawImage(image, 0, 0, width, height, null);
@@ -100,6 +100,7 @@ public class JixelScreen extends Canvas {
 					g.drawImage(entity.getImage(), entityX - screenX, entityY-screenY, entity.getWidth(), entity.getHeight(), null);
 				}
 			}
+			entity.applyActions();
 		}
 		
 		if(JixelGame.getConsole().isRunning()){
@@ -121,7 +122,7 @@ public class JixelScreen extends Canvas {
 		bs.show();
 	}
 	
-	public void render(){
+	public void drawMap(){
 		int xOffset = JixelGame.getVM().getValue("Jixel_xOffset");
 		int yOffset = JixelGame.getVM().getValue("Jixel_yOffset");
 		if(lockedEntity != null){

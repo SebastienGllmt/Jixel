@@ -91,8 +91,8 @@ public abstract class JixelGame implements Runnable{
 				if (getTimer().timeForFrame()) {
 					getScreen().clear();
 					render();
-					getScreen().render();
-					getScreen().update();
+					getScreen().drawMap();
+					getScreen().drawEntities();
 				}
 			}
 		}

@@ -8,7 +8,7 @@ import javax.imageio.ImageIO;
 
 import stage.JixelGame;
 
-public class JixelEntity{
+public abstract class JixelEntity{
 	
 	private String name;
 	private int x, y;
@@ -35,8 +35,7 @@ public class JixelEntity{
 		}
 	}
 	
-	//make this abstract later
-	public void update(){
+	public void applyActions(){
 		if(controllable){
 			if (JixelGame.getInput().right) {
 				setX(x+speed);
@@ -51,7 +50,10 @@ public class JixelEntity{
 				setY(y+speed);
 			}
 		}
+		update();
 	}
+	
+	public abstract void update();
 	
 	public String getName(){
 		return name;
