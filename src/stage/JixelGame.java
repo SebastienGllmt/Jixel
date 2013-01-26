@@ -19,11 +19,15 @@ public abstract class JixelGame implements Runnable{
 
 	public boolean playing = true;
 	public final String GAME_TITLE;
-
-	Thread thread;
 	
-	public JixelGame(String title, int width, int height, int scale, int tileSize) {
+	private final int fps, ups;
+
+	Thread thread; //thread for the update/render
+	
+	public JixelGame(String title, int width, int height, int scale, int tileSize, int fps, int ups) {
 		GAME_TITLE = title;
+		this.fps = fps;
+		this.ups = ups;
 
 		vm = new JixelVariableManager();
 		vm.newVar("Jixel_paused", false);
@@ -66,20 +70,17 @@ public abstract class JixelGame implements Runnable{
 	public JixelTimer getTimer(){
 		return timer;
 	}
-	
+
 	public static JixelEntityManager getEntityList(){
 		return entities;
 	}
 	
 	
-	/*			Abstract portion			*/
-	
-	public abstract void update();
-	public abstract void render();
+	public abstract void update(); //abstract update method for user to override
 	
 	@Override
 	public void run(){
-		getTimer().startTimer(60, 60);
+		getTimer().startTimer(fps, ups);
 		while (playing) {
 			while (!getPaused()) {
 				getTimer().updateTime();
@@ -90,7 +91,6 @@ public abstract class JixelGame implements Runnable{
 				}
 				if (getTimer().timeForFrame()) {
 					getScreen().clear();
-					render();
 					getScreen().drawMap();
 					getScreen().drawEntities();
 				}
