@@ -1,6 +1,7 @@
 package console;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import stage.JixelGame;
@@ -9,13 +10,15 @@ public class JixelConsole implements Runnable {
 
 	private Thread thread;
 	private boolean isRunning = false;
-	private List<String> messageList = new ArrayList<String>();
+	private List<String> underlyingMsgList = new LinkedList<String>();
+	private List<String> messageList;
 	private int logHeight;
 	private int maxWidth;
 
 	public JixelConsole() {
 		thread = new Thread(this, "Console");
 		thread.start();
+		messageList = Collections.synchronizedList(underlyingMsgList);
 		
 		logHeight = (JixelGame.getScreen().getHeight() - 3 * (JixelGame.getScreen().getTileSize())) / 24;
 		int tileSize = JixelGame.getScreen().getTileSize();
@@ -43,16 +46,20 @@ public class JixelConsole implements Runnable {
 		}
 	}
 	
-	private void addToList(String message){
-		int size = messageList.size();
-		if (size - 1 == logHeight) {
-			messageList.remove(size - 1);
+	private synchronized void addToList(String message){
+		synchronized(messageList){
+			int size = messageList.size();
+			if (size - 1 == logHeight) {
+				messageList.remove(size - 1);
+			}
+			messageList.add(0, message);
 		}
-		messageList.add(0, message);
 	}
 
-	public List<String> getMessageList() {
-		return messageList;
+	public synchronized List<String> getMessageList() {
+		synchronized(messageList){
+			return messageList;
+		}
 	}
 
 	public void cInput(String[] input) {
