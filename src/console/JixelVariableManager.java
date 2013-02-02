@@ -12,7 +12,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
+
+import entity.JixelEntity;
 
 import stage.JixelGame;
 
@@ -26,7 +29,7 @@ public class JixelVariableManager {
 	private HashMap<String, Object> objectMap = new HashMap<String, Object>();
 	private HashMap<Object, HashMap<String, Method>> classMap = new HashMap<Object, HashMap<String, Method>>();
 
-	public <T> void newVar(String name, T value) {
+	public synchronized <T> void newVar(String name, T value) {
 		if (varMap.containsKey(name)) {
 			JixelGame.getConsole().print("A variable with the name " + name + " exists.");
 			return;
@@ -34,7 +37,7 @@ public class JixelVariableManager {
 		varMap.put(name, value);
 	}
 
-	public void newClass(Object o, Class<?> clazz) {
+	public synchronized void newClass(Object o, Class<?> clazz) {
 		String className = clazz.getName();
 		if (objectMap.containsKey(className)) {
 			JixelGame.getConsole().print("The class " + className + " is already visible to the console");
@@ -45,9 +48,10 @@ public class JixelVariableManager {
 		Method[] methods = clazz.getMethods();
 		for (Method i : methods) {
 			String name = i.getName();
-			if(classData.containsKey(name)){
-				int j=2; //iterator in case method name already exists
-				while(classData.containsKey(name)){
+			if (classData.containsKey(name)) {
+				int j = 2; // iterator in case method name already
+						// exists
+				while (classData.containsKey(name)) {
 					name = i.getName() + j;
 					j++;
 				}
@@ -63,7 +67,7 @@ public class JixelVariableManager {
 		return objectMap.containsKey(className);
 	}
 
-	public Object runMethod(String className, String methodName, Object... args) {
+	public synchronized Object runMethod(String className, String methodName, Object... args) {
 		String errorMessage = "";
 		Object o = objectMap.get(className);
 		if (o == null) {
@@ -77,8 +81,8 @@ public class JixelVariableManager {
 			Type[] parameters = method.getParameterTypes();
 			int paraAmount = parameters.length;
 			if (paraAmount == args.length) {
-				for(int i=0; i<args.length; i++){
-					args[i] = getValue((Class<?>)parameters[i], (String) args[i]);
+				for (int i = 0; i < args.length; i++) {
+					args[i] = getValue((Class<?>) parameters[i], (String) args[i]);
 				}
 				return method.invoke(o, args);
 			} else if (paraAmount == 0) {
@@ -98,7 +102,7 @@ public class JixelVariableManager {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> T getValue(String name) {
+	public synchronized <T> T getValue(String name) {
 		if (varMap.containsKey(name)) {
 			Object o = varMap.get(name);
 			return (T) o;
@@ -107,11 +111,12 @@ public class JixelVariableManager {
 			return null;
 		}
 	}
-	
-	private Object getValue(Class<?> clazz, String value){
-		if(clazz.equals(String.class)){
+
+	private synchronized Object getValue(Class<?> clazz, String value) {
+		if (clazz.equals(String.class)) {
 			return value;
-		}if (clazz.equals(Byte.class)) {
+		}
+		if (clazz.equals(Byte.class)) {
 			return Byte.parseByte(value);
 		} else if (clazz.equals(Short.class)) {
 			return Short.parseShort(value);
@@ -133,7 +138,7 @@ public class JixelVariableManager {
 		}
 	}
 
-	public boolean setValue(String name, String value) {
+	public synchronized boolean setValue(String name, String value) {
 		Class<?> clazz = JixelGame.getVM().getValue(name).getClass();
 		try {
 			varMap.put(name, getValue(clazz, value));
@@ -144,18 +149,18 @@ public class JixelVariableManager {
 		}
 	}
 
-	public <T> boolean setValue(String name, T value) {
+	public synchronized <T> boolean setValue(String name, T value) {
 		if (!varMap.containsKey(name)) {
 			JixelGame.getConsole().print("No such variable with the name " + name + " exists.");
 			return false;
 		} else {
-			Class<?> nameClass = varMap.get(name).getClass();
+			Object mapValue = varMap.get(name);
 			Class<?> valueClass = value.getClass();
-			if (nameClass.equals(valueClass)) {
+			if (mapValue == null || mapValue.getClass().equals(valueClass)) {
 				varMap.put(name, value);
 				return true;
-			}else{
-				JixelGame.getConsole().print("Incompatible conversion from " + valueClass + " to " + nameClass);
+			} else {
+				JixelGame.getConsole().print("Incompatible conversion from " + valueClass + " to " + mapValue.getClass());
 				return false;
 			}
 		}
@@ -182,14 +187,15 @@ public class JixelVariableManager {
 			}
 			OutputStream out = new FileOutputStream(f);
 			ObjectOutputStream oos = new ObjectOutputStream(out);
-			setValue("Jixel_paused", true);
-			oos.writeObject(varMap);
-			oos.flush();
-			oos.close();
-			setValue("Jixel_paused", false);
+			setValue("Jixel_entityList", JixelGame.getEntityList().getEntityList());
+			synchronized (JixelGame.getUpdateLock()) {
+				oos.writeObject(varMap);
+				oos.flush();
+				oos.close();
+			}
 			return true;
 		} catch (IOException e) {
-			setValue("Jixel_paused", false);
+			e.printStackTrace();
 			return false;
 		}
 	}
@@ -208,8 +214,7 @@ public class JixelVariableManager {
 	/**
 	 * Loads a file with a given name Warning: Will clear all variables
 	 * 
-	 * @param file
-	 *              - File name in /profiles/
+	 * @param file - File name in /profiles/
 	 * @return whether the profile loaded correctly
 	 */
 	@SuppressWarnings("unchecked")
@@ -225,19 +230,20 @@ public class JixelVariableManager {
 			}
 			InputStream in = new FileInputStream(f);
 			ObjectInputStream ois = new ObjectInputStream(in);
-			setValue("Jixel_paused", true);
-			varMap.clear();
-			try {
-				varMap = (HashMap<String, Object>) ois.readObject();
-			} catch (ClassNotFoundException e) {
+			synchronized (JixelGame.getUpdateLock()) {
+				varMap.clear();
+				try {
+					varMap = (HashMap<String, Object>) ois.readObject();
+				} catch (ClassNotFoundException e) {
+					ois.close();
+					return false;
+				}
+				JixelGame.getEntityList().setEntityList((List<JixelEntity>) getValue("Jixel_entityList"));
 				ois.close();
-				return false;
 			}
-			ois.close();
-			setValue("Jixel_paused", false);
 			return true;
 		} catch (IOException e) {
-			setValue("Jixel_paused", false);
+			JixelGame.setPaused(false);
 			return false;
 		}
 	}
