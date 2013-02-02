@@ -95,13 +95,13 @@ public class JixelConsole implements Runnable {
 			answer = "Failed to get";
 			if (input[0].equals("save")) {
 				if (JixelGame.getVM().save(input[1])) {
-					answer = "Profile saved.";
+					answer = "Profile saved to " + input[1];
 				} else {
 					answer = "Save failed.";
 				}
 			} else if (input[0].equals("load")) {
 				if (JixelGame.getVM().load(input[1])) {
-					answer = "Profile loaded.";
+					answer = "Profile loaded from " + input[1];
 				} else {
 					answer = "Loading failed.";
 				}
