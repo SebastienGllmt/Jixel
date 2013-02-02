@@ -13,8 +13,18 @@ public class JixelEntityManager {
 	public void add(int index, JixelEntity entity){
 		entityList.add(index, entity);
 	}
+	public void remove(JixelEntity entity){
+		for(int i=0; i<entityList.size(); i++){
+			if(entityList.get(i).equals(entity)){
+				entityList.remove(i);
+			}
+		}
+	}
 	public void addToFront(JixelEntity entity){
 		entityList.add(0, entity);
+	}
+	public void setEntityList(List<JixelEntity> newList){
+		entityList = newList;
 	}
 	public List<JixelEntity> getEntityList(){
 		return entityList;

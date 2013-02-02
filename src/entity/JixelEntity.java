@@ -3,28 +3,41 @@ package entity;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
 import javax.imageio.ImageIO;
 
 import stage.JixelGame;
 
-public abstract class JixelEntity{
+public abstract class JixelEntity implements Serializable{
 	
+	private final String PATH;
 	private String name;
 	private int x, y;
 	private int width, height;
 	private int speed;
 	private boolean controllable;
 	
-	private BufferedImage img;
+	transient private BufferedImage img;
 	
-	//possibly inherit from JixelSprite?
 	public JixelEntity(final String PATH, String name, int x, int y, int speed, boolean controllable){
+		this.PATH = PATH;
 		this.name = name;
 		this.x = x;
 		this.y = y;
 		this.speed = speed;
 		this.controllable = controllable;
+		readImage();
+	}
+	
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+	{
+	    in.defaultReadObject();
+	    readImage();
+	}
+	
+	private void readImage(){
 		try {
 			this.img = ImageIO.read(new File(PATH));
 			width = img.getWidth();
