@@ -97,10 +97,10 @@ public class JixelScreen extends Canvas {
 			int entityY = entity.getY();
 			if(entityX+entity.getWidth() > screenX && entityX < screenX + width){
 				if(entityY+entity.getHeight() > screenY &&  entityY < screenY + height){
-					g.drawImage(entity.getImage(), entityX - screenX, entityY-screenY, entity.getWidth(), entity.getHeight(), null);
+					g.drawImage(entity.getImg(), entityX - screenX, entityY-screenY, entity.getWidth(), entity.getHeight(), null);
 				}
 			}
-			entity.applyActions();
+			
 		}
 		
 		if(JixelGame.getConsole().isRunning()){
@@ -122,14 +122,21 @@ public class JixelScreen extends Canvas {
 		bs.show();
 	}
 	
+	private void moveMap(int xOffset, int yOffset, int lockedX, int lockedY){
+		int diffX = lockedX - xOffset;
+		int diffY = lockedY - yOffset;
+		JixelGame.getVM().setValue("Jixel_xOffset", (int)(xOffset + Integer.signum(diffX)*Math.sqrt(Math.abs(diffX))));
+		JixelGame.getVM().setValue("Jixel_yOffset", (int)(yOffset + Integer.signum(diffY)*Math.sqrt(Math.abs(diffY))));
+	}
+	
 	public void drawMap(){
 		int xOffset = JixelGame.getVM().getValue("Jixel_xOffset");
 		int yOffset = JixelGame.getVM().getValue("Jixel_yOffset");
 		if(lockedEntity != null){
 			int x = lockedEntity.getX() - (width/2);
 			int y = lockedEntity.getY() - (height/2);
-			JixelGame.getVM().setValue("Jixel_xOffset", x);
-			JixelGame.getVM().setValue("Jixel_yOffset", y);
+			moveMap(xOffset, yOffset, x, y);
+
 		}
 		for(int y=0; y<height; y++){
 			int yy = y - yOffset;
