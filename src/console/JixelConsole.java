@@ -155,12 +155,14 @@ public class JixelConsole implements Runnable {
 		while(true){
 			synchronized(thread){
 				try {
+					JixelGame.setPaused(false);
 					thread.wait();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
 			while (isRunning) {
+				JixelGame.setPaused(true);
 				if (!JixelGame.getInput().isReading()) {
 					String msg = getConsoleMsg();
 					if (!msg.isEmpty()) {
