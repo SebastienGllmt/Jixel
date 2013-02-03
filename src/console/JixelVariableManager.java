@@ -50,7 +50,7 @@ public class JixelVariableManager {
 			String name = i.getName();
 			if (classData.containsKey(name)) {
 				int j = 2; // iterator in case method name already
-						// exists
+							// exists
 				while (classData.containsKey(name)) {
 					name = i.getName() + j;
 					j++;
@@ -82,7 +82,7 @@ public class JixelVariableManager {
 			int paraAmount = parameters.length;
 			if (paraAmount == args.length) {
 				for (int i = 0; i < args.length; i++) {
-					args[i] = getValue((Class<?>) parameters[i], (String) args[i]);
+					args[i] = convertValue((Class<?>) parameters[i], (String) args[i]);
 				}
 				return method.invoke(o, args);
 			} else if (paraAmount == 0) {
@@ -112,7 +112,7 @@ public class JixelVariableManager {
 		}
 	}
 
-	private synchronized Object getValue(Class<?> clazz, String value) {
+	private synchronized Object convertValue(Class<?> clazz, String value) {
 		if (clazz.equals(String.class)) {
 			return value;
 		}
@@ -133,7 +133,7 @@ public class JixelVariableManager {
 		} else if (clazz.equals(Character.class)) {
 			return value.charAt(0);
 		} else {
-			JixelGame.getConsole().print("Uncompatible conversion from String to " + clazz.getClass().toString());
+			JixelGame.getConsole().print("Incompatible conversion from String to " + clazz.getClass().toString());
 			return null;
 		}
 	}
@@ -141,7 +141,7 @@ public class JixelVariableManager {
 	public synchronized boolean setValue(String name, String value) {
 		Class<?> clazz = JixelGame.getVM().getValue(name).getClass();
 		try {
-			varMap.put(name, getValue(clazz, value));
+			varMap.put(name, convertValue(clazz, value));
 			return true;
 		} catch (NumberFormatException e) {
 			JixelGame.getConsole().print("Incompatible conversion from " + value + " to " + clazz.getName());
@@ -156,10 +156,10 @@ public class JixelVariableManager {
 		} else {
 			Object mapValue = varMap.get(name);
 			Class<?> valueClass = value.getClass();
-			if (mapValue == null || mapValue.getClass().equals(valueClass)) {
-				varMap.put(name, value);
+			try {
+				varMap.put(name, valueClass.cast(value));
 				return true;
-			} else {
+			} catch (ClassCastException e) {
 				JixelGame.getConsole().print("Incompatible conversion from " + valueClass + " to " + mapValue.getClass());
 				return false;
 			}
@@ -195,7 +195,7 @@ public class JixelVariableManager {
 			}
 			return true;
 		} catch (IOException e) {
-			e.printStackTrace();
+			JixelGame.getConsole().print("IO Error on save of " + f.getPath());
 			return false;
 		}
 	}
@@ -231,6 +231,7 @@ public class JixelVariableManager {
 			InputStream in = new FileInputStream(f);
 			ObjectInputStream ois = new ObjectInputStream(in);
 			synchronized (JixelGame.getUpdateLock()) {
+				JixelGame.setPaused(true);
 				varMap.clear();
 				try {
 					varMap = (HashMap<String, Object>) ois.readObject();
@@ -243,7 +244,7 @@ public class JixelVariableManager {
 			}
 			return true;
 		} catch (IOException e) {
-			JixelGame.setPaused(false);
+			JixelGame.getConsole().print("IO Error on load of " + f.getPath());
 			return false;
 		}
 	}

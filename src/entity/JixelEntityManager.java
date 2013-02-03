@@ -31,7 +31,7 @@ public class JixelEntityManager {
 	}
 	public void update(){
 		for(JixelEntity entity : entityList){
-			entity.update();
+			entity.applyActions();
 		}
 	}
 

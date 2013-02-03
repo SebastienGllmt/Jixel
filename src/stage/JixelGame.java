@@ -88,23 +88,27 @@ public abstract class JixelGame implements Runnable {
 		return updateLock;
 	}
 
+	boolean updating = false;
 	@Override
 	public void run() {
 		getTimer().startTimer(fps, ups);
 		while (playing) {
-			while (!getPaused()) {
-				synchronized (getUpdateLock()) {
-					getTimer().updateTime();
-					if (getTimer().timeForUpdate() && !getConsole().isRunning()) {
-						getInput().updateKeyboard();
-						update();
-						getEntityList().update();
+			synchronized (getUpdateLock()) {
+				getTimer().updateTime();
+				if (getTimer().timeForUpdate() && !getPaused()) {
+					updating = true;
+					getInput().updateKeyboard();
+					update();
+					getEntityList().update();
+					updating = false;
+				}
+				if (getTimer().timeForFrame()) {
+					if(updating){
+						System.out.println("Threading issue");
 					}
-					if (getTimer().timeForFrame()) {
-						getScreen().clear();
-						getScreen().drawMap();
-						getScreen().drawEntities();
-					}
+					getScreen().clear();
+					getScreen().drawMap();
+					getScreen().drawEntities();
 				}
 			}
 		}

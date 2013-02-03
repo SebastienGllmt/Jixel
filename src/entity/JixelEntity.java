@@ -10,34 +10,30 @@ import javax.imageio.ImageIO;
 
 import stage.JixelGame;
 
-public abstract class JixelEntity implements Serializable{
-	
+public abstract class JixelEntity implements Serializable {
+
 	private final String PATH;
 	private String name;
 	private int x, y;
 	private int width, height;
-	private int speed;
-	private boolean controllable;
-	
+	private double speed;
+
 	transient private BufferedImage img;
-	
-	public JixelEntity(final String PATH, String name, int x, int y, int speed, boolean controllable){
+
+	public JixelEntity(final String PATH, String name, int x, int y, double speed) {
 		this.PATH = PATH;
 		this.name = name;
 		this.x = x;
 		this.y = y;
-		this.speed = speed;
-		this.controllable = controllable;
 		readImage();
 	}
-	
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
-	{
-	    in.defaultReadObject();
-	    readImage();
+
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+		in.defaultReadObject();
+		readImage();
 	}
-	
-	private void readImage(){
+
+	private void readImage() {
 		try {
 			this.img = ImageIO.read(new File(PATH));
 			width = img.getWidth();
@@ -47,58 +43,112 @@ public abstract class JixelEntity implements Serializable{
 			e.printStackTrace();
 		}
 	}
-	
-	public void applyActions(){
-		if(controllable){
-			if (JixelGame.getInput().right) {
-				setX(x+speed);
-			}
-			if (JixelGame.getInput().left) {
-				setX(x-speed);
-			}
-			if (JixelGame.getInput().up) {
-				setY(y-speed);
-			}
-			if (JixelGame.getInput().down) {
-				setY(y+speed);
-			}
+
+	public void applyActions() {
+		if (!JixelGame.getPaused()) {
+			update();
 		}
-		update();
 	}
-	
+
 	public abstract void update();
-	
-	public String getName(){
+
+	/**
+	 * @return the name
+	 */
+	public String getName() {
 		return name;
 	}
-	public void setName(String name){
+
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(String name) {
 		this.name = name;
 	}
-	public int getX(){
+
+	/**
+	 * @return the x
+	 */
+	public int getX() {
 		return x;
 	}
-	public int getY(){
-		return y;
-	}
-	public int getSpeed(){
-		return speed;
-	}
-	public int getWidth(){
-		return width;
-	}
-	public int getHeight(){
-		return height;
-	}
-	public void setX(int x){
+
+	/**
+	 * @param x the x to set
+	 */
+	public void setX(int x) {
 		this.x = x;
 	}
-	public void setY(int y){
+
+	/**
+	 * @return the y
+	 */
+	public int getY() {
+		return y;
+	}
+
+	/**
+	 * @param y the y to set
+	 */
+	public void setY(int y) {
 		this.y = y;
 	}
-	public void setSpeed(int speed){
-		this.speed = speed;
+
+	/**
+	 * @return the width
+	 */
+	public int getWidth() {
+		return width;
 	}
-	public BufferedImage getImage(){
+
+	/**
+	 * @param width the width to set
+	 */
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
+	/**
+	 * @return the height
+	 */
+	public int getHeight() {
+		return height;
+	}
+
+	/**
+	 * @param height the height to set
+	 */
+	public void setHeight(int height) {
+		this.height = height;
+	}
+
+	
+	/**
+	 * @return the img
+	 */
+	public BufferedImage getImg() {
 		return img;
 	}
+
+	/**
+	 * @param img the img to set
+	 */
+	public void setImg(BufferedImage img) {
+		this.img = img;
+	}
+
+	/**
+	 * @return the speed
+	 */
+	public double getSpeed() {
+		return speed;
+	}
+
+	/**
+	 * @param speed the speed to set
+	 */
+	public void setSpeed(double speed) {
+		this.speed = speed;
+	}
+
 }
