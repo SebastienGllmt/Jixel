@@ -12,6 +12,8 @@ public class JixelTimer {
 	private int frames;
 	private int updates;
 	
+	private long bootTime;
+	
 	private final String GAME_TITLE;
 	
 	public JixelTimer(String gameTitle){
@@ -19,6 +21,8 @@ public class JixelTimer {
 	}
 	
 	public void startTimer(double fps, double ups) {
+		bootTime = System.currentTimeMillis();
+		
 		fpsNS = 1000000000.0 / fps;
 		upsNS = 1000000000.0 / ups;
 
@@ -65,5 +69,9 @@ public class JixelTimer {
 		} else {
 			return false;
 		}
+	}
+	
+	public long getBootTime(){
+		return bootTime;
 	}
 }
