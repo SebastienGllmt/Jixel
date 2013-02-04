@@ -1,4 +1,4 @@
-package entity;
+package jixel.entity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ public class JixelEntityManager {
 	public void setEntityList(List<JixelEntity> newList){
 		entityList = newList;
 	}
-	public List<JixelEntity> getEntityList(){
+	public List<JixelEntity> getList(){
 		return entityList;
 	}
 	public void update(){

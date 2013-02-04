@@ -1,4 +1,4 @@
-package gui;
+package jixel.gui;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -6,7 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import stage.JixelGame;
+import jixel.stage.JixelGame;
+
 
 public class JixelMap {
 

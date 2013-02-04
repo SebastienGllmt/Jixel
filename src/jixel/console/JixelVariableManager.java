@@ -1,4 +1,4 @@
-package console;
+package jixel.console;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,9 +15,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import entity.JixelEntity;
+import jixel.entity.JixelEntity;
+import jixel.stage.JixelGame;
 
-import stage.JixelGame;
+
 
 public class JixelVariableManager {
 
@@ -187,7 +188,7 @@ public class JixelVariableManager {
 			}
 			OutputStream out = new FileOutputStream(f);
 			ObjectOutputStream oos = new ObjectOutputStream(out);
-			setValue("Jixel_entityList", JixelGame.getEntityList().getEntityList());
+			setValue("Jixel_entityList", JixelGame.getEntityList().getList());
 			synchronized (JixelGame.getUpdateLock()) {
 				oos.writeObject(varMap);
 				oos.flush();

@@ -1,9 +1,10 @@
-package console;
+package jixel.console;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import stage.JixelGame;
+import jixel.stage.JixelGame;
+
 
 public class JixelConsole implements Runnable {
 

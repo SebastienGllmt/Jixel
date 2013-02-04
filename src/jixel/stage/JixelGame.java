@@ -1,12 +1,12 @@
-package stage;
+package jixel.stage;
 
-import input.JixelInput;
+import jixel.console.JixelConsole;
+import jixel.console.JixelVariableManager;
+import jixel.entity.JixelEntityManager;
+import jixel.gui.JixelMap;
+import jixel.gui.JixelScreen;
+import jixel.input.JixelInput;
 
-import console.JixelConsole;
-import console.JixelVariableManager;
-import entity.JixelEntityManager;
-import gui.JixelMap;
-import gui.JixelScreen;
 
 public abstract class JixelGame implements Runnable {
 
@@ -23,16 +23,15 @@ public abstract class JixelGame implements Runnable {
 	public final String GAME_TITLE;
 	private static boolean paused = false;
 
-	private final int fps, ups;
+	private final int fps;
 
 	private final static Object updateLock = new Object();
 
 	Thread thread; // thread for the update/render
 
-	public JixelGame(String title, int width, int height, int scale, int tileSize, int fps, int ups) {
+	public JixelGame(String title, int width, int height, int scale, int tileSize, int fps) {
 		GAME_TITLE = title;
 		this.fps = fps;
-		this.ups = ups;
 
 		vm = new JixelVariableManager();
 		getVM().newVar("Jixel_entityList", null);
@@ -97,16 +96,16 @@ public abstract class JixelGame implements Runnable {
 
 	@Override
 	public void run() {
-		getTimer().startTimer(fps, ups);
+		getTimer().startTimer(fps);
 		while (playing) {
 			synchronized (getUpdateLock()) {
 				getTimer().updateTime();
-				if (getTimer().timeForUpdate() && !getPaused()) {
-					getInput().updateKeyboard();
-					update();
-					getEntityList().update();
-				}
 				if (getTimer().timeForFrame()) {
+					if (!getPaused()) {
+						getInput().updateKeyboard();
+						update();
+						getEntityList().update();
+					}
 					getScreen().clear();
 					if (map.canLoad()) {
 						getScreen().drawMap();

@@ -1,9 +1,10 @@
-package input;
+package jixel.input;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import stage.JixelGame;
+import jixel.stage.JixelGame;
+
 
 public class JixelInput implements KeyListener {
 

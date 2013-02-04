@@ -1,4 +1,4 @@
-package entity;
+package jixel.entity;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -8,7 +8,8 @@ import java.io.Serializable;
 
 import javax.imageio.ImageIO;
 
-import stage.JixelGame;
+import jixel.stage.JixelGame;
+
 
 public abstract class JixelEntity implements Serializable {
 

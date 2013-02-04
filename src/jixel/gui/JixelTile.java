@@ -1,4 +1,4 @@
-package gui;
+package jixel.gui;
 
 public class JixelTile {
 

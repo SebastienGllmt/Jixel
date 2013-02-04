@@ -1,4 +1,4 @@
-package gui;
+package jixel.gui;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -6,7 +6,8 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import stage.JixelGame;
+import jixel.stage.JixelGame;
+
 
 public class JixelSprite {
 
