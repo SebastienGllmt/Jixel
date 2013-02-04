@@ -12,7 +12,7 @@ import jixel.stage.JixelGame;
 public class JixelMap {
 
 	private int width, height;
-	private int[] tiles;
+	private JixelTile[] tiles;
 	private boolean holdsLevel = false;
 	private JixelSprite spriteSheet;
 	
@@ -39,10 +39,10 @@ public class JixelMap {
 		try {
 			width = in.read();
 			height = in.read();
-			tiles = new int[width*height];
+			tiles = new JixelTile[width*height];
 			for(int y=0; y<height; y++){
 				for(int x=0; x<width; x++){
-					tiles[x+y*width] = in.read();
+					tiles[x+y*width] = new JixelTile(in.read());
 				}
 			}
 			holdsLevel = true;
@@ -70,6 +70,6 @@ public class JixelMap {
 		if(x < 0 || x >= width || y < 0 || y >= height){
 			return -1;
 		}
-		return tiles[x+y*width];
+		return tiles[x+y*width].getTileID();
 	}
 }

@@ -93,7 +93,7 @@ public class JixelConsole implements Runnable {
 				answer = "No such variable with the name " + input[0] + " exists.";
 			}
 		} else if (input.length == 2) {
-			answer = "Failed to get";
+			answer = "Command invalid or not used properly";
 			if (input[0].equals("save")) {
 				if (JixelGame.getVM().save(input[1])) {
 					answer = "Profile saved to " + input[1];
@@ -107,10 +107,13 @@ public class JixelConsole implements Runnable {
 					answer = "Loading failed.";
 				}
 			}
-			if (input[0].equals("stop")) {
-				if (input[1].equals("console")) {
+			if (input[0].equals("editor")) {
+				if (input[1].equals("start")) {
 					setState(false);
-					answer = "Console stopped";
+					answer = "Editor launched";
+				}else if(input[1].equals("quit")){
+					setState(false);
+					answer = "Editor exited";
 				}
 			}
 		} else if (input.length == 3) {
@@ -133,10 +136,10 @@ public class JixelConsole implements Runnable {
 	}
 
 	public String getConsoleMsg(){
-		return JixelGame.getInput().getConsoleMsg();
+		return JixelGame.getKeyInput().getConsoleMsg();
 	}
 	public void startConsoleMsg(int maxLength){
-		JixelGame.getInput().startConsoleMsg(maxLength);
+		JixelGame.getKeyInput().startConsoleMsg(maxLength);
 	}
 	public boolean isRunning() {
 		return isRunning;
@@ -164,7 +167,7 @@ public class JixelConsole implements Runnable {
 			}
 			while (isRunning) {
 				JixelGame.setPaused(true);
-				if (!JixelGame.getInput().isReading()) {
+				if (!JixelGame.getKeyInput().isReading()) {
 					String msg = getConsoleMsg();
 					if (!msg.isEmpty()) {
 						String[] commands = msg.split(" ");

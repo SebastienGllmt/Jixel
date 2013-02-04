@@ -6,7 +6,7 @@ import java.awt.event.KeyListener;
 import jixel.stage.JixelGame;
 
 
-public class JixelInput implements KeyListener {
+public class JixelKeyInput implements KeyListener {
 
 	private boolean[] keys = new boolean[525];
 	public boolean up=false, down=false, left=false, right=false, enter=false;
@@ -21,7 +21,7 @@ public class JixelInput implements KeyListener {
 	private char lastKey = 0;
 	private boolean reading = false;
 
-	public JixelInput() {
+	public JixelKeyInput() {
 		JixelGame.getVM().newVar("Jixel_upKey", KeyEvent.VK_UP);
 		JixelGame.getVM().newVar("Jixel_downKey", KeyEvent.VK_DOWN);
 		JixelGame.getVM().newVar("Jixel_leftKey", KeyEvent.VK_LEFT);

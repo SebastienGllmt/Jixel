@@ -7,6 +7,8 @@ import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -14,11 +16,10 @@ import java.util.List;
 import java.util.Random;
 
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import jixel.entity.JixelEntity;
 import jixel.stage.JixelGame;
-
-
 
 @SuppressWarnings("serial")
 public class JixelScreen extends Canvas {
@@ -27,6 +28,9 @@ public class JixelScreen extends Canvas {
 	private int scale;
 	private int tileSize;
 	private final int FIXSHIFT;
+
+	private int screenX, screenY;
+	private int mouseX, mouseY;
 
 	private JFrame frame;
 	private BufferStrategy bs;
@@ -63,7 +67,7 @@ public class JixelScreen extends Canvas {
 		bs = getBufferStrategy();
 		image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
-		
+
 		requestFocus();
 	}
 
@@ -92,9 +96,11 @@ public class JixelScreen extends Canvas {
 					g.drawImage(entity.getImg(), entityX - screenX, entityY - screenY, entity.getWidth(), entity.getHeight(), null);
 				}
 			}
-
 		}
 
+		int tileX = (int)mouseX >> FIXSHIFT;
+		int tileY = (int)mouseY >> FIXSHIFT;
+		g.drawRect(tileX*tileSize - screenX%32, tileY*tileSize - screenY%32, tileSize, tileSize);
 		if (JixelGame.getConsole().isRunning()) {
 			Composite alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) .5);
 			g.setComposite(alpha);
@@ -108,7 +114,7 @@ public class JixelScreen extends Canvas {
 			for (int i = 0; i < messageList.size(); i++) {
 				g.drawString(messageList.get(i), tileSize + (tileSize / 2), height - tileSize - (tileSize / 2) - (i * 24));
 			}
-			g.drawString(JixelGame.getInput().getConsoleMsg(), tileSize + (tileSize / 2), height - (tileSize / 2) + 6);
+			g.drawString(JixelGame.getKeyInput().getConsoleMsg(), tileSize + (tileSize / 2), height - (tileSize / 2) + 6);
 		}
 		g.dispose();
 		bs.show();
@@ -127,8 +133,25 @@ public class JixelScreen extends Canvas {
 		}
 	}
 
-	int screenX, screenY;
+	private void updateMouse() {
+		Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+		SwingUtilities.convertPointFromScreen(mousePoint, this);
+		mouseX = (int) mousePoint.getX() + screenX%32;
+		if (mouseX < 0) {
+			mouseX = 0;
+		} else if (mouseX > width) {
+			mouseX = width;
+		}
+		mouseY = (int) mousePoint.getY() + screenY%32;
+		if (mouseY < 0) {
+			mouseY = 0;
+		} else if (mouseY > width) {
+			mouseY = width;
+		}
+	}
+
 	public void drawMap() {
+		updateMouse();
 		screenX = JixelGame.getVM().getValue("Jixel_xOffset");
 		screenY = JixelGame.getVM().getValue("Jixel_yOffset");
 		updateCamera(screenX, screenY);

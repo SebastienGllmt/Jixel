@@ -5,7 +5,8 @@ import jixel.console.JixelVariableManager;
 import jixel.entity.JixelEntityManager;
 import jixel.gui.JixelMap;
 import jixel.gui.JixelScreen;
-import jixel.input.JixelInput;
+import jixel.input.JixelKeyInput;
+import jixel.input.JixelMouseInput;
 
 
 public abstract class JixelGame implements Runnable {
@@ -13,7 +14,8 @@ public abstract class JixelGame implements Runnable {
 	private static JixelVariableManager vm;
 	private static JixelConsole con;
 	private static JixelScreen screen;
-	private static JixelInput input;
+	private static JixelKeyInput keyInput;
+	private static JixelMouseInput mouseInput;
 	private static JixelTimer timer;
 	private static JixelMap map;
 
@@ -41,8 +43,11 @@ public abstract class JixelGame implements Runnable {
 
 		con = new JixelConsole();
 
-		input = new JixelInput();
-		screen.addKeyListener(input);
+		keyInput = new JixelKeyInput();
+		mouseInput = new JixelMouseInput();
+		screen.addKeyListener(keyInput);
+		screen.addMouseListener(mouseInput);
+		
 		map = new JixelMap();
 
 		start();
@@ -76,8 +81,11 @@ public abstract class JixelGame implements Runnable {
 		paused = newState;
 	}
 
-	public static synchronized JixelInput getInput() {
-		return input;
+	public static synchronized JixelKeyInput getKeyInput() {
+		return keyInput;
+	}
+	public static synchronized JixelMouseInput getMouseInput() {
+		return mouseInput;
 	}
 
 	public JixelTimer getTimer() {
@@ -102,7 +110,7 @@ public abstract class JixelGame implements Runnable {
 				getTimer().updateTime();
 				if (getTimer().timeForFrame()) {
 					if (!getPaused()) {
-						getInput().updateKeyboard();
+						getKeyInput().updateKeyboard();
 						update();
 						getEntityList().update();
 					}
