@@ -11,8 +11,10 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jixel.entity.JixelEntity;
@@ -26,15 +28,22 @@ public class JixelVariableManager {
 	private final String SAV_NAME = "char";
 	private final String SAV_TYPE = ".sav";
 
-	private HashMap<String, Object> varMap = new HashMap<String, Object>();
-	private HashMap<String, Object> objectMap = new HashMap<String, Object>();
-	private HashMap<Object, HashMap<String, Method>> classMap = new HashMap<Object, HashMap<String, Method>>();
+	private Map<String, Object> varMap = new HashMap<String, Object>();
+	private Map<String, Object> objectMap = new HashMap<String, Object>();
+	private Map<Object, HashMap<String, Method>> classMap = new HashMap<Object, HashMap<String, Method>>();
 
+	public JixelVariableManager(){
+		varMap = Collections.synchronizedMap(varMap);
+		objectMap = Collections.synchronizedMap(objectMap);
+		classMap = Collections.synchronizedMap(classMap);
+	}
+	
 	public synchronized <T> void newVar(String name, T value) {
 		if (varMap.containsKey(name)) {
 			JixelGame.getConsole().print("A variable with the name " + name + " exists.");
 			return;
 		}
+		
 		varMap.put(name, value);
 	}
 
@@ -235,7 +244,7 @@ public class JixelVariableManager {
 				JixelGame.setPaused(true);
 				varMap.clear();
 				try {
-					varMap = (HashMap<String, Object>) ois.readObject();
+					varMap = (Map<String, Object>) ois.readObject();
 				} catch (ClassNotFoundException e) {
 					ois.close();
 					return false;
