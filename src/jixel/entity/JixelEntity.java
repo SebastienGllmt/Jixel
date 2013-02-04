@@ -21,11 +21,12 @@ public abstract class JixelEntity implements Serializable {
 
 	transient private BufferedImage img;
 
-	public JixelEntity(final String PATH, String name, int x, int y, double speed) {
+	public JixelEntity(final String PATH, String name, int tileX, int tileY, double speed) {
 		this.PATH = PATH;
 		this.name = name;
-		this.x = x;
-		this.y = y;
+		int tileSize = JixelGame.getScreen().getTileSize();
+		this.x = tileX*tileSize;
+		this.y = tileY*tileSize;
 		readImage();
 	}
 
