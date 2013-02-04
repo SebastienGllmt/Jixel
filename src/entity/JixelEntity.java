@@ -39,8 +39,8 @@ public abstract class JixelEntity implements Serializable {
 			width = img.getWidth();
 			height = img.getHeight();
 		} catch (IOException e) {
-			System.out.println("Failed to read entity at " + PATH);
 			e.printStackTrace();
+			JixelGame.getConsole().print("Failed to read entity at " + PATH);
 		}
 	}
 
