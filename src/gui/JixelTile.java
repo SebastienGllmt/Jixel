@@ -6,16 +6,23 @@ public class JixelTile {
 	private JixelSprite sprite;
 	private boolean solid=false;
 	
-	public JixelTile(JixelSprite sprite){
+	public JixelTile(JixelSprite sprite, boolean solid){
+		this.solid = solid;
 		this.sprite = sprite;
 	}
 	
-	private void render(int x, int y, JixelScreen screen){
-		
+	public void render(int x, int y, JixelScreen screen){
 	}
 	
-	public boolean solid(){
+	public boolean getSolid(){
 		return solid;
+	}
+	
+	/**
+	 * @return the underlying sprite
+	 */
+	public JixelSprite getSprite(){
+		return sprite;
 	}
 
 }
