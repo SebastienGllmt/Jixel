@@ -5,6 +5,7 @@ import input.JixelInput;
 import console.JixelConsole;
 import console.JixelVariableManager;
 import entity.JixelEntityManager;
+import gui.JixelMap;
 import gui.JixelScreen;
 
 public abstract class JixelGame implements Runnable {
@@ -14,6 +15,7 @@ public abstract class JixelGame implements Runnable {
 	private static JixelScreen screen;
 	private static JixelInput input;
 	private static JixelTimer timer;
+	private static JixelMap map;
 
 	private static JixelEntityManager entities = new JixelEntityManager();
 
@@ -42,12 +44,17 @@ public abstract class JixelGame implements Runnable {
 
 		input = new JixelInput();
 		screen.addKeyListener(input);
+		map = new JixelMap();
 
 		start();
 	}
 
 	public String getTitle() {
 		return GAME_TITLE;
+	}
+
+	public static JixelMap getMap() {
+		return map;
 	}
 
 	public static synchronized JixelScreen getScreen() {
@@ -88,7 +95,6 @@ public abstract class JixelGame implements Runnable {
 		return updateLock;
 	}
 
-	boolean updating = false;
 	@Override
 	public void run() {
 		getTimer().startTimer(fps, ups);
@@ -96,18 +102,15 @@ public abstract class JixelGame implements Runnable {
 			synchronized (getUpdateLock()) {
 				getTimer().updateTime();
 				if (getTimer().timeForUpdate() && !getPaused()) {
-					updating = true;
 					getInput().updateKeyboard();
 					update();
 					getEntityList().update();
-					updating = false;
 				}
 				if (getTimer().timeForFrame()) {
-					if(updating){
-						System.out.println("Threading issue");
-					}
 					getScreen().clear();
-					getScreen().drawMap();
+					if (map.canLoad()) {
+						getScreen().drawMap();
+					}
 					getScreen().drawEntities();
 				}
 			}
