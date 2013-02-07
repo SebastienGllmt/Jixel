@@ -8,16 +8,19 @@ import jixel.gui.JixelScreen;
 import jixel.input.JixelKeyInput;
 import jixel.input.JixelMouseInput;
 
-
 public abstract class JixelGame implements Runnable {
 
 	private static JixelVariableManager vm;
 	private static JixelConsole con;
-	private static JixelScreen screen;
 	private static JixelKeyInput keyInput;
 	private static JixelMouseInput mouseInput;
 	private static JixelTimer timer;
 	private static JixelMap map;
+	
+	
+	private static JixelEditorScreen editorScreen;
+	private static JixelGameScreen gameScreen;
+	private static JixelScreen screen;
 
 	private static JixelEntityManager entities = new JixelEntityManager();
 
@@ -29,7 +32,7 @@ public abstract class JixelGame implements Runnable {
 
 	private final static Object updateLock = new Object();
 
-	Thread thread; // thread for the update/render
+	private static Thread thread; // thread for the update/render
 
 	public JixelGame(String title, int width, int height, int scale, int tileSize, int fps) {
 		GAME_TITLE = title;
@@ -45,9 +48,12 @@ public abstract class JixelGame implements Runnable {
 
 		keyInput = new JixelKeyInput();
 		mouseInput = new JixelMouseInput();
+		
+		editorScreen = new JixelEditorScreen(0, 0, width, height);
+		gameScreen = new JixelGameScreen(0, 0, width, height);
+		screen.attachCamera(gameScreen);
 		screen.addKeyListener(keyInput);
 		screen.addMouseListener(mouseInput);
-		
 		map = new JixelMap();
 
 		start();
@@ -61,6 +67,10 @@ public abstract class JixelGame implements Runnable {
 		return map;
 	}
 
+	public static synchronized JixelEditorScreen getEditor(){
+		return editorScreen;
+	}
+	
 	public static synchronized JixelScreen getScreen() {
 		return screen;
 	}
@@ -126,7 +136,7 @@ public abstract class JixelGame implements Runnable {
 	}
 
 	public synchronized void start() {
-		thread = new Thread(this, "GUI");
+		thread = new Thread(this, "Jixel Main");
 		thread.start();
 	}
 

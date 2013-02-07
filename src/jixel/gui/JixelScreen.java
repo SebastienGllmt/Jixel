@@ -13,7 +13,6 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.List;
-import java.util.Random;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -24,24 +23,22 @@ import jixel.stage.JixelGame;
 @SuppressWarnings("serial")
 public class JixelScreen extends Canvas {
 
-	private int width, height;
-	private int scale;
-	private int tileSize;
+	private String title;
+	private int width, height, scale, tileSize;
 	private final int FIXSHIFT;
-
+	private JixelCamera camera;
+	public int[] pixels;
+	private JFrame frame;
 	private int screenX, screenY;
 	private int mouseX, mouseY;
-
-	private JFrame frame;
+	
 	private BufferStrategy bs;
 	private BufferedImage image;
-	public int[] pixels;
-
+	
 	private Font font = new Font("Courier", Font.PLAIN, 12);
 
-	JixelEntity lockedEntity;
-	Random rand = new Random();
-
+	private JixelEntity lockedEntity;
+	
 	public JixelScreen(String title, int width, int height, int scale, int tileSize) {
 		this.width = width;
 		this.height = height;
@@ -70,6 +67,10 @@ public class JixelScreen extends Canvas {
 
 		requestFocus();
 	}
+	
+	public void attachCamera(JixelCamera camera){
+		this.camera = camera;
+	}
 
 	public void lockOn(JixelEntity entity) {
 		lockedEntity = entity;
@@ -86,7 +87,9 @@ public class JixelScreen extends Canvas {
 		g.setFont(font);
 		g.drawImage(image, 0, 0, width, height, null);
 
-		List<JixelEntity> entityList = JixelGame.getEntityList().getList();
+		camera.drawUnder(g);
+		
+		List<JixelEntity> entityList = camera.getEntityList();
 		for (int i = 0; i < entityList.size(); i++) {
 			JixelEntity entity = entityList.get(i);
 			int entityX = entity.getX();
@@ -98,9 +101,8 @@ public class JixelScreen extends Canvas {
 			}
 		}
 
-		int tileX = (int)mouseX >> FIXSHIFT;
-		int tileY = (int)mouseY >> FIXSHIFT;
-		g.drawRect(tileX*tileSize - screenX%32, tileY*tileSize - screenY%32, tileSize, tileSize);
+		camera.drawOver(g);
+		
 		if (JixelGame.getConsole().isRunning()) {
 			Composite alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) .5);
 			g.setComposite(alpha);
@@ -155,38 +157,54 @@ public class JixelScreen extends Canvas {
 		screenX = JixelGame.getVM().getValue("Jixel_xOffset");
 		screenY = JixelGame.getVM().getValue("Jixel_yOffset");
 		updateCamera(screenX, screenY);
-		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
-		for (int y = 0; y < height; y++) {
+		for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
 			int yy = y + screenY;
-			for (int x = 0; x < width; x++) {
+			for (int x = camera.getMinX(); x < camera.getMaxX(); x++) {
 				int xx = x + screenX;
 				int tileID = JixelGame.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
 				pixels[x + y * width] = JixelGame.getMap().getSpriteSheet().loadImg(tileID, xx & 31, yy & 31);
 			}
 		}
-		g.dispose();
-		bs.show();
-
 	}
 
-	public void setTitle(String newTitle) {
-		frame.setTitle(newTitle);
+	public String getTitle() {
+		return title;
 	}
 
 	public int getWidth() {
 		return width;
 	}
 
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
 	public int getHeight() {
 		return height;
+	}
+
+	public void setHeight(int height) {
+		this.height = height;
 	}
 
 	public int getScale() {
 		return scale;
 	}
 
+	public void setScale(int scale) {
+		this.scale = scale;
+	}
+
 	public int getTileSize() {
 		return tileSize;
+	}
+
+	public void setTileSize(int tileSize) {
+		this.tileSize = tileSize;
+	}
+	
+	public void setTitle(String newTitle) {
+		frame.setTitle(newTitle);
 	}
 
 	public int getFixshift() {
