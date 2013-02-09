@@ -11,6 +11,7 @@ import javax.imageio.ImageIO;
 import jixel.stage.JixelGame;
 
 
+@SuppressWarnings("serial")
 public abstract class JixelEntity implements Serializable {
 
 	private final String PATH;
@@ -44,6 +45,13 @@ public abstract class JixelEntity implements Serializable {
 			e.printStackTrace();
 			JixelGame.getConsole().print("Failed to read entity at " + PATH);
 		}
+	}
+	
+	public boolean equalsByName(String s){
+		return s.equals(this.name);
+	}
+	public boolean equalsByName(JixelEntity e){
+		return e.getName().equals(this.name);
 	}
 
 	public void applyActions() {
