@@ -3,6 +3,7 @@ package jixel.stage;
 import jixel.console.JixelConsole;
 import jixel.console.JixelVariableManager;
 import jixel.entity.JixelEntityManager;
+import jixel.gui.JixelCamera;
 import jixel.gui.JixelMap;
 import jixel.gui.JixelScreen;
 import jixel.input.JixelKeyInput;
@@ -16,8 +17,7 @@ public abstract class JixelGame implements Runnable {
 	private static JixelMouseInput mouseInput;
 	private static JixelTimer timer;
 	private static JixelMap map;
-	
-	
+
 	private static JixelEditorScreen editorScreen;
 	private static JixelGameScreen gameScreen;
 	private static JixelScreen screen;
@@ -39,7 +39,8 @@ public abstract class JixelGame implements Runnable {
 		this.fps = fps;
 
 		vm = new JixelVariableManager();
-		getVM().newVar("Jixel_entityList", null);
+		getVM().newVar("Jixel_lockedEntity", null);
+		getVM().newVar("Jixel_entityList", entities.getList());
 
 		screen = new JixelScreen(title, width, height, scale, tileSize);
 		timer = new JixelTimer(title);
@@ -48,12 +49,13 @@ public abstract class JixelGame implements Runnable {
 
 		keyInput = new JixelKeyInput();
 		mouseInput = new JixelMouseInput();
-		
+
 		editorScreen = new JixelEditorScreen(0, 0, width, height);
 		gameScreen = new JixelGameScreen(0, 0, width, height);
-		screen.attachCamera(gameScreen);
-		screen.addKeyListener(keyInput);
-		screen.addMouseListener(mouseInput);
+		
+		getScreen().attachCamera(gameScreen);
+		getScreen().addKeyListener(keyInput);
+		getScreen().addMouseListener(mouseInput);
 		map = new JixelMap();
 
 		start();
@@ -67,19 +69,15 @@ public abstract class JixelGame implements Runnable {
 		return map;
 	}
 
-	public static synchronized JixelEditorScreen getEditor(){
-		return editorScreen;
-	}
-	
-	public static synchronized JixelScreen getScreen() {
+	public static JixelScreen getScreen() {
 		return screen;
 	}
 
-	public static synchronized JixelConsole getConsole() {
+	public static JixelConsole getConsole() {
 		return con;
 	}
 
-	public static synchronized JixelVariableManager getVM() {
+	public static JixelVariableManager getVM() {
 		return vm;
 	}
 
@@ -91,14 +89,15 @@ public abstract class JixelGame implements Runnable {
 		paused = newState;
 	}
 
-	public static synchronized JixelKeyInput getKeyInput() {
+	public static JixelKeyInput getKeyInput() {
 		return keyInput;
 	}
-	public static synchronized JixelMouseInput getMouseInput() {
+
+	public static JixelMouseInput getMouseInput() {
 		return mouseInput;
 	}
 
-	public JixelTimer getTimer() {
+	public static JixelTimer getTimer() {
 		return timer;
 	}
 
@@ -111,6 +110,14 @@ public abstract class JixelGame implements Runnable {
 	public static Object getUpdateLock() {
 		return updateLock;
 	}
+
+	public void attachCamera(JixelCamera camera) {
+		synchronized (getUpdateLock()) {
+			getScreen().attachCamera(camera);
+		}
+	}
+
+	public abstract void loadState();
 
 	@Override
 	public void run() {
@@ -125,7 +132,7 @@ public abstract class JixelGame implements Runnable {
 						getEntityList().update();
 					}
 					getScreen().clear();
-					if (map.canLoad()) {
+					if (getMap().canLoad()) {
 						getScreen().drawMap();
 					}
 					getScreen().drawEntities();
