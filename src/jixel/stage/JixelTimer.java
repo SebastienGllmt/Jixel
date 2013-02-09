@@ -17,7 +17,7 @@ public class JixelTimer {
 		GAME_TITLE = gameTitle;
 	}
 	
-	public void startTimer(double fps) {
+	public void startTimer(int fps) {
 		bootTime = System.currentTimeMillis();
 		
 		fpsNS = 1000000000.0 / fps;
