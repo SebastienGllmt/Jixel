@@ -13,37 +13,42 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import jixel.entity.JixelEntity;
 import jixel.stage.JixelGame;
 
+final class defaultLoader extends JixelLoader
+{
+	@Override
+	public void loadState() {
+	}
+	
+}
 
+public final class JixelVariableManager {
 
-public class JixelVariableManager {
+	private static final String SAV_DIR = "profiles";
+	private static final String SAV_NAME = "char";
+	private static final String SAV_TYPE = ".sav";
 
-	private final String SAV_DIR = "profiles";
-	private final String SAV_NAME = "char";
-	private final String SAV_TYPE = ".sav";
+	private JixelLoader loader = new defaultLoader();
 
 	private Map<String, Object> varMap = new HashMap<String, Object>();
 	private Map<String, Object> objectMap = new HashMap<String, Object>();
 	private Map<Object, HashMap<String, Method>> classMap = new HashMap<Object, HashMap<String, Method>>();
 
-	public JixelVariableManager(){
+	public JixelVariableManager() {
 		varMap = Collections.synchronizedMap(varMap);
 		objectMap = Collections.synchronizedMap(objectMap);
 		classMap = Collections.synchronizedMap(classMap);
 	}
-	
+
 	public synchronized <T> void newVar(String name, T value) {
 		if (varMap.containsKey(name)) {
 			JixelGame.getConsole().print("A variable with the name " + name + " exists.");
 			return;
 		}
-		
+
 		varMap.put(name, value);
 	}
 
@@ -59,8 +64,7 @@ public class JixelVariableManager {
 		for (Method i : methods) {
 			String name = i.getName();
 			if (classData.containsKey(name)) {
-				int j = 2; // iterator in case method name already
-							// exists
+				int j = 2; // iterator in case method name already exists
 				while (classData.containsKey(name)) {
 					name = i.getName() + j;
 					j++;
@@ -197,7 +201,8 @@ public class JixelVariableManager {
 			}
 			OutputStream out = new FileOutputStream(f);
 			ObjectOutputStream oos = new ObjectOutputStream(out);
-			setValue("Jixel_entityList", JixelGame.getEntityList().getList());
+			setValue("Jixel_entityList", JixelGame.getEntityList().getList()); // force
+															// update
 			synchronized (JixelGame.getUpdateLock()) {
 				oos.writeObject(varMap);
 				oos.flush();
@@ -249,13 +254,22 @@ public class JixelVariableManager {
 					ois.close();
 					return false;
 				}
-				JixelGame.getEntityList().setEntityList((List<JixelEntity>) getValue("Jixel_entityList"));
+				if (loader != null) {
+					loader.runLoader();
+				} else {
+					JixelGame.getConsole().print("Error: No loader attached to VM");
+				}
 				ois.close();
 			}
 			return true;
 		} catch (IOException e) {
+			e.printStackTrace();
 			JixelGame.getConsole().print("IO Error on load of " + f.getPath());
 			return false;
 		}
+	}
+
+	public void setLoader(JixelLoader loader) {
+		this.loader = loader;
 	}
 }
