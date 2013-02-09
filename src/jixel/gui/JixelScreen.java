@@ -73,6 +73,7 @@ public class JixelScreen extends Canvas {
 	}
 
 	public void lockOn(JixelEntity entity) {
+		JixelGame.getVM().setValue("Jixel_lockedEntity", entity);
 		lockedEntity = entity;
 	}
 
