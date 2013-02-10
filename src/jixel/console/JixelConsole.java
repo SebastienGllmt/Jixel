@@ -11,24 +11,24 @@ public class JixelConsole implements Runnable {
 	private Thread thread;
 	private boolean isRunning = false;
 	private List<String> messageList = new ArrayList<String>();
-	private int logHeight;
-	private int maxWidth;
+	private int LOG_HEIGHT;
+	private int MAX_WIDTH;
 
 	public JixelConsole() {
 		thread = new Thread(this, "Console");
 		thread.start();
 		
-		logHeight = (JixelGame.getScreen().getHeight() - 3 * (JixelGame.getScreen().getTileSize())) / 24;
+		LOG_HEIGHT = (JixelGame.getScreen().getHeight() - 3 * (JixelGame.getScreen().getTileSize())) / 24;
 		int tileSize = JixelGame.getScreen().getTileSize();
 		int width = JixelGame.getScreen().getWidth();
-		maxWidth = width - 3*tileSize;
+		MAX_WIDTH = width - 3*tileSize;
 	}
 
 	public void print(String message) {
 		StringBuilder output = new StringBuilder();
 		String[] words = message.split(" ");
 		for(int i=0; i<words.length; i++){
-			if((words[i].length() + output.length()) * 8 > maxWidth){
+			if((words[i].length() + output.length()) * 8 > MAX_WIDTH){
 				break;
 			}
 			output.append(" " + words[i]);
@@ -46,7 +46,7 @@ public class JixelConsole implements Runnable {
 	
 	private void addToList(String message){
 		int size = messageList.size();
-		if (size - 1 == logHeight) {
+		if (size - 1 == LOG_HEIGHT) {
 			messageList.remove(size - 1);
 		}
 		messageList.add(0, message);
@@ -174,7 +174,7 @@ public class JixelConsole implements Runnable {
 						String[] commands = msg.split(" ");
 						cInput(commands);
 					}
-					startConsoleMsg((maxWidth/8)-1);
+					startConsoleMsg((MAX_WIDTH>>3)-1);
 				}
 			}
 		}
