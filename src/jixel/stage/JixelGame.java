@@ -22,9 +22,9 @@ public abstract class JixelGame implements Runnable {
 	private static JixelGameScreen gameScreen;
 	private static JixelScreen screen;
 
-	private static JixelEntityManager entities = new JixelEntityManager();
+	private static JixelEntityManager entities;
 
-	public boolean playing = true;
+	public static boolean playing = true;
 	public final String GAME_TITLE;
 	private static boolean paused = false;
 
@@ -39,11 +39,12 @@ public abstract class JixelGame implements Runnable {
 		this.fps = fps;
 
 		vm = new JixelVariableManager();
+		entities = new JixelEntityManager();
 		getVM().newVar("Jixel_lockedEntity", null);
 		getVM().newVar("Jixel_entityList", entities.getList());
 
 		screen = new JixelScreen(title, width, height, scale, tileSize);
-		timer = new JixelTimer(title);
+		timer = new JixelTimer();
 
 		con = new JixelConsole();
 
@@ -121,7 +122,7 @@ public abstract class JixelGame implements Runnable {
 
 	@Override
 	public void run() {
-		getTimer().startTimer(fps);
+		getTimer().setFPS(fps);
 		while (playing) {
 			synchronized (getUpdateLock()) {
 				getTimer().updateTime();

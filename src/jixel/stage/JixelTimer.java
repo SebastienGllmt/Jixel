@@ -7,54 +7,80 @@ public class JixelTimer {
 	private long lastTime;
 	private long now;
 	private double deltaFps;
-	private int frames;
+	private int frames, lastFrameCount;
 	
-	private long bootTime;
+	private final long BOOT_TIME;
+	private int fps;
 	
-	private final String GAME_TITLE;
-	
-	public JixelTimer(String gameTitle){
-		GAME_TITLE = gameTitle;
+	public JixelTimer(){
+		BOOT_TIME = System.currentTimeMillis();
 	}
 	
-	public void startTimer(int fps) {
-		bootTime = System.currentTimeMillis();
-		
+	/**
+	 * Restarts the timer with a given fps
+	 * @param fps
+	 */
+	private void startTimer(int fps) {	
 		fpsNS = 1000000000.0 / fps;
-
 		timer = System.currentTimeMillis();
 		lastTime = System.nanoTime();
-
 		deltaFps = 0;
 		frames = 0;
-
 		now = System.nanoTime();
 	}
 
+	/**
+	 * Updates the timer
+	 */
 	public void updateTime() {
-
 		if (System.currentTimeMillis() - timer > 1000) {
 			timer += 1000;
-			JixelGame.getScreen().setTitle(GAME_TITLE + "Fps: " + frames);
+			lastFrameCount = frames;
 			frames = 0;
 		}
-
 		now = System.nanoTime();
 		deltaFps += (now - lastTime) / fpsNS;
 		lastTime = now;
 	}
 
+	/**
+	 * @return whether or not its time to update
+	 */
 	public boolean timeForFrame() {
 		if (deltaFps >= 1) {
 			frames++;
-			deltaFps--;
+			deltaFps=0;
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
+	/**
+	 * @return The last fps count
+	 */
+	public int getLastFrameCount(){
+		return lastFrameCount;
+	}
+	
+	/**
+	 * @return The time in milliseconds the game was booted
+	 */
 	public long getBootTime(){
-		return bootTime;
+		return BOOT_TIME;
+	}
+	
+	/**
+	 * @return Gets the fps the game should run at
+	 */
+	public int getFPS(){
+		return fps;
+	}
+	/**
+	 * Sets the game to run at a new fps
+	 * @param fps
+	 */
+	public void setFPS(int fps){
+		startTimer(fps);
 	}
 }
