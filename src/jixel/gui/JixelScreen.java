@@ -23,11 +23,10 @@ import jixel.stage.JixelGame;
 @SuppressWarnings("serial")
 public class JixelScreen extends Canvas {
 
-	private String title;
 	private int width, height, scale, tileSize;
 	private final int FIXSHIFT;
 	private JixelCamera camera;
-	public int[] pixels;
+	private int[] pixels;
 	private JFrame frame;
 	private int screenX, screenY;
 	private int mouseX, mouseY;
@@ -68,22 +67,25 @@ public class JixelScreen extends Canvas {
 		requestFocus();
 	}
 	
-	public void attachCamera(JixelCamera camera){
+	public synchronized void attachCamera(JixelCamera camera){
 		this.camera = camera;
 	}
+	public synchronized JixelCamera getCamera(){
+		return camera;
+	}
 
-	public void lockOn(JixelEntity entity) {
+	public synchronized void lockOn(JixelEntity entity) {
 		JixelGame.getVM().setValue("Jixel_lockedEntity", entity);
 		lockedEntity = entity;
 	}
 
-	public void clear() {
+	public synchronized void clear() {
 		for (int i = 0; i < pixels.length; i++) {
 			pixels[i] = 0;
 		}
 	}
 
-	public void drawEntities() {
+	public synchronized void drawEntities() {
 		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
 		g.setFont(font);
 		g.drawImage(image, 0, 0, width, height, null);
@@ -134,7 +136,7 @@ public class JixelScreen extends Canvas {
 		}
 	}
 
-	public void updateCamera(int xOffset, int yOffset) {
+	private synchronized void updateCamera(int xOffset, int yOffset) {
 		if (lockedEntity != null) {
 			int x = (int)lockedEntity.getX() - (width / 2);
 			int y = (int)lockedEntity.getY() - (height / 2);
@@ -159,7 +161,7 @@ public class JixelScreen extends Canvas {
 		}
 	}
 
-	public void drawMap() {
+	public synchronized void drawMap() {
 		updateMouse();
 		updateCamera(screenX, screenY);
 		for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
@@ -171,11 +173,11 @@ public class JixelScreen extends Canvas {
 			}
 		}
 	}
-
-	public String getTitle() {
-		return title;
+	
+	public JixelEntity getLockedEntity(){
+		return lockedEntity;
 	}
-
+	
 	public int getWidth() {
 		return width;
 	}
