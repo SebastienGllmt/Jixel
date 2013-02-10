@@ -14,7 +14,7 @@ public class JixelSprite {
 	private final String PATH;
 	private int width, height;
 	
-	private BufferedImage img;
+	private transient BufferedImage img;
 	private int sheetWidth, sheetHeight;
 	private int[] sheetPixels;
 	
@@ -53,7 +53,7 @@ public class JixelSprite {
 		return sheetPixels[(tileX*width + xx) + (tileY*height + yy)*sheetWidth];
 	}
 	
-	private void loadSheet(){
+	protected void loadSheet(){
 		try {
 			File f = new File(PATH);
 			img = ImageIO.read(f);

@@ -1,50 +1,31 @@
 package jixel.entity;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
-import javax.imageio.ImageIO;
-
+import jixel.gui.JixelSprite;
 import jixel.stage.JixelGame;
 
-
 @SuppressWarnings("serial")
-public abstract class JixelEntity implements Serializable {
+public abstract class JixelEntity extends JixelSprite implements Serializable {
 
-	private final String PATH;
 	private String name;
 	private int x, y;
-	private int width, height;
 	private double speed;
 
-	transient private BufferedImage img;
-
 	public JixelEntity(final String PATH, String name, int tileX, int tileY, double speed) {
-		this.PATH = PATH;
+		super(PATH);
 		this.name = name;
 		int tileSize = JixelGame.getScreen().getTileSize();
 		this.x = tileX*tileSize;
 		this.y = tileY*tileSize;
-		readImage();
+		loadSheet();
 	}
 
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
-		readImage();
-	}
-
-	private void readImage() {
-		try {
-			this.img = ImageIO.read(new File(PATH));
-			width = img.getWidth();
-			height = img.getHeight();
-		} catch (IOException e) {
-			e.printStackTrace();
-			JixelGame.getConsole().print("Failed to read entity at " + PATH);
-		}
+		loadSheet();
 	}
 	
 	public boolean equalsByName(String s){
@@ -102,49 +83,6 @@ public abstract class JixelEntity implements Serializable {
 	 */
 	public void setY(int y) {
 		this.y = y;
-	}
-
-	/**
-	 * @return the width
-	 */
-	public int getWidth() {
-		return width;
-	}
-
-	/**
-	 * @param width the width to set
-	 */
-	public void setWidth(int width) {
-		this.width = width;
-	}
-
-	/**
-	 * @return the height
-	 */
-	public int getHeight() {
-		return height;
-	}
-
-	/**
-	 * @param height the height to set
-	 */
-	public void setHeight(int height) {
-		this.height = height;
-	}
-
-	
-	/**
-	 * @return the img
-	 */
-	public BufferedImage getImg() {
-		return img;
-	}
-
-	/**
-	 * @param img the img to set
-	 */
-	public void setImg(BufferedImage img) {
-		this.img = img;
 	}
 
 	/**
