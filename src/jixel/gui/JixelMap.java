@@ -2,12 +2,10 @@ package jixel.gui;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
 import jixel.stage.JixelGame;
-
 
 public class JixelMap {
 
@@ -29,14 +27,7 @@ public class JixelMap {
 
 	public void loadLevel(String path) {
 		File f = new File(path);
-		InputStream in;
-		try {
-			in = new FileInputStream(f);
-		} catch (FileNotFoundException e1) {
-			JixelGame.getConsole().print("Map not found");
-			return;
-		}
-		try {
+		try(InputStream in = new FileInputStream(f)) {
 			width = in.read();
 			height = in.read();
 			tiles = new JixelTile[width*height];
@@ -46,9 +37,9 @@ public class JixelMap {
 				}
 			}
 			holdsLevel = true;
-			in.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+			JixelGame.getConsole().print("Map not found");
 		}
 	}
 	

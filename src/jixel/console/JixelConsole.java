@@ -162,6 +162,7 @@ public class JixelConsole implements Runnable {
 					JixelGame.setPaused(false);
 					thread.wait();
 				} catch (InterruptedException e) {
+					print("Console thread interrupted");
 					e.printStackTrace();
 				}
 			}

@@ -17,12 +17,11 @@ import java.util.Map;
 
 import jixel.stage.JixelGame;
 
-final class defaultLoader extends JixelLoader
-{
+final class defaultLoader extends JixelLoader {
 	@Override
 	public void loadState() {
 	}
-	
+
 }
 
 public final class JixelVariableManager {
@@ -195,18 +194,19 @@ public final class JixelVariableManager {
 			dir.mkdir();
 		}
 		File f = new File(SAV_DIR + "\\" + file);
-		try {
-			if (!f.exists()) {
+		if (!f.exists()) {
+			try {
 				f.createNewFile();
+			} catch (IOException e) {
+				JixelGame.getConsole().print("Failed to create file:" + file);
+				e.printStackTrace();
+				return false;
 			}
-			OutputStream out = new FileOutputStream(f);
-			ObjectOutputStream oos = new ObjectOutputStream(out);
-			setValue("Jixel_entityList", JixelGame.getEntityList().getList()); // force
-															// update
+		}
+		try (OutputStream out = new FileOutputStream(f); ObjectOutputStream oos = new ObjectOutputStream(out)) {
+			setValue("Jixel_entityList", JixelGame.getEntityList().getList()); // force update
 			synchronized (JixelGame.getUpdateLock()) {
 				oos.writeObject(varMap);
-				oos.flush();
-				oos.close();
 			}
 			return true;
 		} catch (IOException e) {
@@ -217,7 +217,6 @@ public final class JixelVariableManager {
 
 	/**
 	 * Loads a profile by its id Warning: Will clear all variables
-	 * 
 	 * @param profileID
 	 * @return whether the profile loaded correctly
 	 */
@@ -228,7 +227,6 @@ public final class JixelVariableManager {
 
 	/**
 	 * Loads a file with a given name Warning: Will clear all variables
-	 * 
 	 * @param file - File name in /profiles/
 	 * @return whether the profile loaded correctly
 	 */
@@ -239,12 +237,12 @@ public final class JixelVariableManager {
 			dir.mkdir();
 		}
 		File f = new File(SAV_DIR + "\\" + file);
-		try {
-			if (!f.exists()) {
-				return false;
-			}
-			InputStream in = new FileInputStream(f);
-			ObjectInputStream ois = new ObjectInputStream(in);
+		if (!f.exists()) {
+			JixelGame.getConsole().print("Failed to create file:" + file);
+			return false;
+		}
+		try (InputStream in = new FileInputStream(f);
+				ObjectInputStream ois = new ObjectInputStream(in)){
 			synchronized (JixelGame.getUpdateLock()) {
 				JixelGame.setPaused(true);
 				varMap.clear();
@@ -259,7 +257,6 @@ public final class JixelVariableManager {
 				} else {
 					JixelGame.getConsole().print("Error: No loader attached to VM");
 				}
-				ois.close();
 			}
 			return true;
 		} catch (IOException e) {
