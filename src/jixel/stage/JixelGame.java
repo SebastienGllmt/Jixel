@@ -4,7 +4,6 @@ import jixel.console.JixelConsole;
 import jixel.console.JixelVariableManager;
 import jixel.entity.JixelEntityManager;
 import jixel.gui.JixelCamera;
-import jixel.gui.JixelMap;
 import jixel.gui.JixelScreen;
 import jixel.input.JixelKeyInput;
 import jixel.input.JixelMouseInput;
@@ -27,15 +26,12 @@ public abstract class JixelGame implements Runnable {
 	public final String GAME_TITLE;
 	private static boolean paused = false;
 
-	private final int fps;
-
 	private final static Object updateLock = new Object();
 
 	private static Thread thread; // thread for the update/render
 
 	public JixelGame(String title, int width, int height, int scale, int tileSize, int fps) {
 		GAME_TITLE = title;
-		this.fps = fps;
 
 		vm = new JixelVariableManager();
 		entities = new JixelEntityManager();
@@ -44,15 +40,16 @@ public abstract class JixelGame implements Runnable {
 
 		editorScreen = new JixelEditorScreen(0, 0, width, height);
 		gameScreen = new JixelGameScreen(0, 0, width, height);
-		
+
 		screen = new JixelScreen(title, gameScreen, width, height, scale, tileSize);
 		timer = new JixelTimer();
+		timer.setFPS(fps);
 
 		con = new JixelConsole();
 
 		keyInput = new JixelKeyInput();
 		mouseInput = new JixelMouseInput();
-		
+
 		getScreen().addKeyListener(keyInput);
 		getScreen().addMouseListener(mouseInput);
 
@@ -66,7 +63,8 @@ public abstract class JixelGame implements Runnable {
 	public static JixelScreen getScreen() {
 		return screen;
 	}
-	public static JixelCamera getCamera(){
+
+	public static JixelCamera getCamera() {
 		return getScreen().getCamera();
 	}
 
@@ -108,11 +106,8 @@ public abstract class JixelGame implements Runnable {
 		return updateLock;
 	}
 
-	public abstract void loadState();
-
 	@Override
 	public void run() {
-		getTimer().setFPS(fps);
 		while (playing) {
 			synchronized (getUpdateLock()) {
 				getTimer().updateTime();
@@ -127,17 +122,27 @@ public abstract class JixelGame implements Runnable {
 				}
 			}
 		}
-		stop();
+		synchronized (getUpdateLock()) {
+			stop();
+		}
 	}
 
 	private synchronized void start() {
 		thread = new Thread(this, "Jixel Main");
 		thread.start();
 	}
-	
-	public void closeGame(){
+
+	public abstract void closeOperation();
+
+	public void closeGame() {
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				closeOperation();
+			}
+		});
 		playing = false;
 	}
+
 	private synchronized void stop() {
 		try {
 			thread.join();
