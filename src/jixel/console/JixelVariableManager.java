@@ -17,20 +17,23 @@ import java.util.Map;
 
 import jixel.stage.JixelGame;
 
-final class defaultLoader extends JixelLoader {
+final class defaultStateManager extends JixelStateManager {
 	@Override
 	public void loadState() {
+	}
+
+	@Override
+	public void saveState() {
 	}
 
 }
 
 public final class JixelVariableManager {
-
 	private static final String SAV_DIR = "profiles";
 	private static final String SAV_NAME = "char";
 	private static final String SAV_TYPE = ".sav";
 
-	private JixelLoader loader = new defaultLoader();
+	private JixelStateManager stateManager = new defaultStateManager();
 
 	private Map<String, Object> varMap = new HashMap<String, Object>();
 	private Map<String, Object> objectMap = new HashMap<String, Object>();
@@ -204,8 +207,10 @@ public final class JixelVariableManager {
 			}
 		}
 		try (OutputStream out = new FileOutputStream(f); ObjectOutputStream oos = new ObjectOutputStream(out)) {
-			setValue("Jixel_entityList", JixelGame.getEntityManager().getList()); // force update
 			synchronized (JixelGame.getUpdateLock()) {
+				if (stateManager != null) {
+					stateManager.saveState();
+				}
 				oos.writeObject(varMap);
 			}
 			return true;
@@ -241,8 +246,7 @@ public final class JixelVariableManager {
 			JixelGame.getConsole().print("Failed to create file:" + file);
 			return false;
 		}
-		try (InputStream in = new FileInputStream(f);
-				ObjectInputStream ois = new ObjectInputStream(in)){
+		try (InputStream in = new FileInputStream(f); ObjectInputStream ois = new ObjectInputStream(in)) {
 			synchronized (JixelGame.getUpdateLock()) {
 				JixelGame.setPaused(true);
 				varMap.clear();
@@ -252,8 +256,8 @@ public final class JixelVariableManager {
 					ois.close();
 					return false;
 				}
-				if (loader != null) {
-					loader.runLoader();
+				if (stateManager != null) {
+					stateManager.runLoader();
 				} else {
 					JixelGame.getConsole().print("Error: No loader attached to VM");
 				}
@@ -266,7 +270,7 @@ public final class JixelVariableManager {
 		}
 	}
 
-	public void setLoader(JixelLoader loader) {
-		this.loader = loader;
+	public void setStateManager(JixelStateManager stateManager) {
+		this.stateManager = stateManager;
 	}
 }
