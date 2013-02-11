@@ -20,7 +20,8 @@ public class JixelTimer {
 	 * Restarts the timer with a given fps
 	 * @param fps
 	 */
-	private void startTimer(int fps) {	
+	private void startTimer(int fps) {
+		this.fps = fps;
 		fpsNS = 1000000000.0 / fps;
 		timer = System.currentTimeMillis();
 		lastTime = System.nanoTime();
