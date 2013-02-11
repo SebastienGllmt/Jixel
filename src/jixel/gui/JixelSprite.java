@@ -17,7 +17,10 @@ public class JixelSprite {
 	private transient BufferedImage img;
 	private int sheetWidth, sheetHeight;
 	private int[] sheetPixels;
+	private int currentTile;
 	
+	private boolean flipH=false, flipV=false;
+
 	public JixelSprite(String path){
 		this.PATH = path;
 		this.width = JixelGame.getScreen().getTileSize();
@@ -67,6 +70,9 @@ public class JixelSprite {
 		}
 	}
 
+	/**
+	 * @return the image of the sprite
+	 */
 	public BufferedImage getImg(){
 		return img;
 	}
@@ -84,4 +90,45 @@ public class JixelSprite {
 		return height;
 	}
 	
+	/**
+	 * @return the currentTile
+	 */
+	public int getTileID() {
+		return currentTile;
+	}
+
+	/**
+	 * @param currentTile the currentTile to set
+	 */
+	public void setTileID(int tileID) {
+		this.currentTile = tileID;
+	}
+	
+	/**
+	 * @return the flipH
+	 */
+	public boolean isFlipH() {
+		return flipH;
+	}
+
+	/**
+	 * @param flipH the flipH to set
+	 */
+	public void setFlipH(boolean state) {
+		this.flipH = state;
+	}
+
+	/**
+	 * @return the flipV
+	 */
+	public boolean isFlipV() {
+		return flipV;
+	}
+
+	/**
+	 * @param flipV the flipV to set
+	 */
+	public void setFlipV(boolean state) {
+		this.flipV = state;
+	}
 }

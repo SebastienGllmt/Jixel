@@ -30,20 +30,19 @@ public class JixelScreen extends Canvas {
 	private JFrame frame;
 	private int screenX, screenY;
 	private int mouseX, mouseY;
-	
+
 	private BufferStrategy bs;
 	private BufferedImage image;
-	
+
 	private Font font = new Font("Courier", Font.PLAIN, 12);
 
 	private JixelEntity lockedEntity;
-	
+
 	public JixelScreen(String title, int width, int height, int scale, int tileSize) {
 		this.width = width;
 		this.height = height;
 		this.tileSize = tileSize;
 		FIXSHIFT = (int) (Math.log(tileSize) / Math.log(2));
-
 		JixelGame.getVM().newVar("Jixel_xOffset", 0);
 		JixelGame.getVM().newVar("Jixel_yOffset", 0);
 
@@ -66,11 +65,12 @@ public class JixelScreen extends Canvas {
 
 		requestFocus();
 	}
-	
-	public synchronized void attachCamera(JixelCamera camera){
+
+	public synchronized void attachCamera(JixelCamera camera) {
 		this.camera = camera;
 	}
-	public synchronized JixelCamera getCamera(){
+
+	public synchronized JixelCamera getCamera() {
 		return camera;
 	}
 
@@ -85,27 +85,40 @@ public class JixelScreen extends Canvas {
 		}
 	}
 
+	private void drawEntity(Graphics2D g, JixelEntity entity) {
+		int entityX = (int) entity.getX();
+		int entityY = (int) entity.getY();
+		BufferedImage img = new BufferedImage(entity.getWidth(), entity.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		int[] entityPixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
+
+		for (int y = 0; y < entity.getHeight(); y++) {
+			if (entityY + y > 0 && entityY + y < getMapHeight()) {
+				for (int x = 0; x < entity.getWidth(); x++) {
+					if (entityX + x > 0 && entityX + x < getMapWidth()) {
+						int xx = entity.isFlipH() ? entity.getWidth() - x - 1 : x;
+						int yy = entity.isFlipV() ? entity.getHeight() - y - 1 : y;
+						entityPixels[x + y * entity.getWidth()] = entity.loadImg(entity.getTileID(), xx, yy);
+					}
+				}
+			}
+		}
+		g.drawImage(img, entityX - screenX, entityY - screenY, entity.getWidth(), entity.getHeight(), null);
+	}
+
 	public synchronized void drawEntities() {
 		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
 		g.setFont(font);
 		g.drawImage(image, 0, 0, width, height, null);
 
 		camera.drawUnder(g);
-		
+
 		List<JixelEntity> entityList = camera.getEntityList();
 		for (int i = 0; i < entityList.size(); i++) {
-			JixelEntity entity = entityList.get(i);
-			int entityX = (int)entity.getX();
-			int entityY = (int)entity.getY();
-			if (entityX + entity.getWidth() > screenX && entityX < screenX + width) {
-				if (entityY + entity.getHeight() > screenY && entityY < screenY + height) {
-					g.drawImage(entity.getImg(), entityX - screenX, entityY - screenY, entity.getWidth(), entity.getHeight(), null);
-				}
-			}
+			drawEntity(g, entityList.get(i));
 		}
 
 		camera.drawOver(g);
-		
+
 		if (JixelGame.getConsole().isRunning()) {
 			Composite alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) .5);
 			g.setComposite(alpha);
@@ -117,29 +130,37 @@ public class JixelScreen extends Canvas {
 			g.drawLine(tileSize, height - tileSize, width - tileSize, height - tileSize);
 			List<String> messageList = JixelGame.getConsole().getMessageList();
 			for (int i = 0; i < messageList.size(); i++) {
-				g.drawString(messageList.get(i), tileSize + (tileSize / 2), height - tileSize - (tileSize / 2) - (i * 24));
+				g.drawString(messageList.get(i), tileSize + (tileSize >> 1), height - tileSize - (tileSize >> 1) - (i * 24));
 			}
-			g.drawString(JixelGame.getKeyInput().getConsoleMsg(), tileSize + (tileSize / 2), height - (tileSize / 2) + 6);
+			g.drawString(JixelGame.getKeyInput().getConsoleMsg(), tileSize + (tileSize >> 1), height - (tileSize >> 1) + 6);
 		}
 		g.dispose();
 		bs.show();
 	}
 
 	public void adjustScreen(int xOffset, int yOffset) {
-		if(xOffset >= 0 && xOffset <= (JixelGame.getMap().getWidth()<<FIXSHIFT)-getWidth()){
-			screenX = xOffset;
-			JixelGame.getVM().setValue("Jixel_xOffset", xOffset);
+		if (xOffset < 0) {
+			xOffset = 0;
 		}
-		if(yOffset >= 0 && yOffset <= (JixelGame.getMap().getHeight()<<FIXSHIFT)-getHeight()){
-			screenY = yOffset;
-			JixelGame.getVM().setValue("Jixel_yOffset", yOffset);
+		if (yOffset < 0) {
+			yOffset = 0;
 		}
+		if (xOffset > getMapWidth() - getWidth()) {
+			xOffset = getMapWidth() - getWidth();
+		}
+		if (yOffset > getMapHeight() - getHeight()) {
+			yOffset = getMapHeight() - getHeight();
+		}
+		screenX = xOffset;
+		JixelGame.getVM().setValue("Jixel_xOffset", xOffset);
+		screenY = yOffset;
+		JixelGame.getVM().setValue("Jixel_yOffset", yOffset);
 	}
 
 	private synchronized void updateCamera(int xOffset, int yOffset) {
 		if (lockedEntity != null) {
-			int x = (int)lockedEntity.getX() - (width / 2);
-			int y = (int)lockedEntity.getY() - (height / 2);
+			int x = (int) lockedEntity.getX() - (width >> 1);
+			int y = (int) lockedEntity.getY() - (height >> 1);
 			adjustScreen(x, y);
 		}
 	}
@@ -147,13 +168,13 @@ public class JixelScreen extends Canvas {
 	private void updateMouse() {
 		Point mousePoint = MouseInfo.getPointerInfo().getLocation();
 		SwingUtilities.convertPointFromScreen(mousePoint, this);
-		mouseX = (int) mousePoint.getX() + screenX%32;
+		mouseX = (int) mousePoint.getX() + screenX % 32;
 		if (mouseX < 0) {
 			mouseX = 0;
 		} else if (mouseX > width) {
 			mouseX = width;
 		}
-		mouseY = (int) mousePoint.getY() + screenY%32;
+		mouseY = (int) mousePoint.getY() + screenY % 32;
 		if (mouseY < 0) {
 			mouseY = 0;
 		} else if (mouseY > width) {
@@ -173,17 +194,25 @@ public class JixelScreen extends Canvas {
 			}
 		}
 	}
-	
-	public JixelEntity getLockedEntity(){
+
+	public JixelEntity getLockedEntity() {
 		return lockedEntity;
 	}
-	
+
 	public int getWidth() {
 		return width;
 	}
 
 	public void setWidth(int width) {
 		this.width = width;
+	}
+
+	public int getMapWidth() {
+		return JixelGame.getMap().getWidth() << FIXSHIFT;
+	}
+
+	public int getMapHeight() {
+		return JixelGame.getMap().getHeight() << FIXSHIFT;
 	}
 
 	public int getHeight() {
@@ -209,7 +238,7 @@ public class JixelScreen extends Canvas {
 	public void setTileSize(int tileSize) {
 		this.tileSize = tileSize;
 	}
-	
+
 	public void setTitle(String newTitle) {
 		frame.setTitle(newTitle);
 	}
