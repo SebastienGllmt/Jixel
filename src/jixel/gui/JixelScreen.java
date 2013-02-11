@@ -112,7 +112,8 @@ public class JixelScreen extends Canvas {
 
 		camera.drawUnder(g);
 
-		List<JixelEntity> entityList = camera.getEntityList();
+		camera.getEntityManager().sort();
+		List<JixelEntity> entityList = camera.getEntityManager().getList();
 		for (int i = 0; i < entityList.size(); i++) {
 			drawEntity(g, entityList.get(i));
 		}

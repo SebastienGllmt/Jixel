@@ -1,9 +1,7 @@
 package jixel.gui;
 
 import java.awt.Graphics2D;
-import java.util.List;
-
-import jixel.entity.JixelEntity;
+import jixel.entity.JixelEntityManager;
 
 public abstract class JixelCamera {
 	
@@ -19,7 +17,7 @@ public abstract class JixelCamera {
 	public abstract void drawUnder(Graphics2D g);
 	public abstract void drawOver(Graphics2D g);
 	
-	public abstract List<JixelEntity> getEntityList();
+	public abstract JixelEntityManager getEntityManager();
 
 	/**
 	 * @return the minX

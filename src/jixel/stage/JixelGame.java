@@ -102,7 +102,7 @@ public abstract class JixelGame implements Runnable {
 		return timer;
 	}
 
-	public static JixelEntityManager getEntityList() {
+	public static JixelEntityManager getEntityManager() {
 		return entities;
 	}
 
@@ -122,6 +122,7 @@ public abstract class JixelGame implements Runnable {
 
 	@Override
 	public void run() {
+		System.out.println(fps);
 		getTimer().setFPS(fps);
 		while (playing) {
 			synchronized (getUpdateLock()) {
@@ -130,7 +131,7 @@ public abstract class JixelGame implements Runnable {
 					if (!getPaused()) {
 						getKeyInput().updateKeyboard();
 						update();
-						getEntityList().update();
+						getScreen().getCamera().getEntityManager().update();
 					}
 					getScreen().clear();
 					if (getMap().canLoad()) {

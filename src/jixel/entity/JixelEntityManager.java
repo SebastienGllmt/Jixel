@@ -22,12 +22,12 @@ public class JixelEntityManager {
 			}
 		}
 	}
-
-	public synchronized void addToFront(JixelEntity entity) {
-		entityList.add(0, entity);
+	
+	public synchronized void sort(){
+		Collections.sort(entityList);
 	}
-
-	public synchronized void setEntityList(List<JixelEntity> newList) {
+	
+	public synchronized void setList(List<JixelEntity> newList) {
 		entityList = newList;
 	}
 
@@ -41,7 +41,7 @@ public class JixelEntityManager {
 		}
 	}
 
-	public boolean containsByName(String s) {
+	public synchronized boolean containsByName(String s) {
 		for (JixelEntity entity : entityList) {
 			if (entity.getName().equals(s)) {
 				return true;
@@ -50,7 +50,7 @@ public class JixelEntityManager {
 		return false;
 	}
 
-	public boolean containsByName(JixelEntity e) {
+	public synchronized boolean containsByName(JixelEntity e) {
 		for (JixelEntity entity : entityList) {
 			if (entity.getName().equals(e.getName())) {
 				return true;
@@ -60,15 +60,10 @@ public class JixelEntityManager {
 	}
 
 	public boolean contains(JixelEntity e) {
-		for (JixelEntity entity : entityList) {
-			if (entity.equals(e)) {
-				return true;
-			}
-		}
-		return false;
+		return entityList.contains(e);
 	}
 
-	public int getSize() {
+	public synchronized int getSize() {
 		return entityList.size();
 	}
 

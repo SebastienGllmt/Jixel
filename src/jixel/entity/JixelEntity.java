@@ -8,7 +8,7 @@ import jixel.gui.JixelSprite;
 import jixel.stage.JixelGame;
 
 @SuppressWarnings("serial")
-public abstract class JixelEntity extends JixelSprite implements Serializable {
+public abstract class JixelEntity extends JixelSprite implements Comparable<JixelEntity>, Serializable {
 
 	private String name;
 	private double x, y;
@@ -97,6 +97,16 @@ public abstract class JixelEntity extends JixelSprite implements Serializable {
 	 */
 	public void setSpeed(double speed) {
 		this.speed = speed;
+	}
+	
+	public int compareTo(JixelEntity e){
+		if(e.getY()+getHeight() > getY()+getHeight()){
+			return -1;
+		}else if(e.getY() == getY()){
+			return 0;
+		}else{
+			return 1;
+		}
 	}
 
 }

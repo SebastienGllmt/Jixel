@@ -204,7 +204,7 @@ public final class JixelVariableManager {
 			}
 		}
 		try (OutputStream out = new FileOutputStream(f); ObjectOutputStream oos = new ObjectOutputStream(out)) {
-			setValue("Jixel_entityList", JixelGame.getEntityList().getList()); // force update
+			setValue("Jixel_entityList", JixelGame.getEntityManager().getList()); // force update
 			synchronized (JixelGame.getUpdateLock()) {
 				oos.writeObject(varMap);
 			}
