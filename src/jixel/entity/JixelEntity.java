@@ -1,8 +1,15 @@
 package jixel.entity;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 import jixel.gui.JixelSprite;
 import jixel.stage.JixelGame;
@@ -14,33 +21,122 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	private double x, y;
 	private double speed;
 
-	public JixelEntity(final String PATH, String name, int tileX, int tileY, double speed) {
-		super(PATH);
+	private String currentAnim = null;
+	private int animIndex = 0, fps = 0, frameCount = 0;
+	private final Map<String, List<Integer>> animMap = new HashMap<String, List<Integer>>();
+
+	public JixelEntity(final String IMG_PATH, final String ANIM_PATH, String name, int tileX, int tileY, double speed) {
+		super(IMG_PATH);
 		this.name = name;
 		int tileSize = JixelGame.getScreen().getTileSize();
-		this.x = tileX*tileSize;
-		this.y = tileY*tileSize;
+		this.x = tileX * tileSize;
+		this.y = tileY * tileSize;
+		if (ANIM_PATH != null) {
+			readAnim(ANIM_PATH);
+		}
 		loadSheet();
 	}
 
+	/**
+	 * Reads the animation file for an entity
+	 * @param path - The path of the anim file
+	 */
+	private void readAnim(String path) {
+		File f = new File(path);
+		try (Scanner scan = new Scanner(f)) {
+			fps = scan.nextInt();
+			scan.nextLine();
+			while (scan.hasNextLine()) {
+				String name = scan.nextLine();
+				List<Integer> tiles = new ArrayList<Integer>();
+				while (scan.hasNextInt()) {
+					tiles.add(scan.nextInt());
+				}
+				if (animMap.size() == 0) {
+					currentAnim = name;
+				}
+				animMap.put(name, tiles);
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			JixelGame.getConsole().print("Could not find anim file at: " + f.getPath());
+		} catch (Exception e) {
+			e.printStackTrace();
+			JixelGame.getConsole().print("Failed to read anim file at: " + f.getPath());
+		}
+	}
+
+	/**
+	 * Updates the animation of the entity
+	 */
+	private void updateAnim() {
+		if (frameCount == fps) {
+			frameCount=0;
+			animIndex++;
+			List<Integer> tiles = animMap.get(currentAnim);
+			if (animIndex == tiles.size()) {
+				animIndex = 0;
+			}
+			setTileID(tiles.get(animIndex));
+		}
+	}
+
+	public void playAnim(String name) {
+		if (animMap.containsKey(name)) {
+			if (!name.equals(currentAnim)) {
+				currentAnim = name;
+				animIndex = 0;
+			}
+		} else {
+			JixelGame.getConsole().print("No anim called " + name + " found in " + this.name);
+		}
+	}
+
+	/**
+	 * Rereading image after loading from serialization
+	 * @param in
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		in.defaultReadObject();
 		loadSheet();
 	}
-	
-	public boolean equalsByName(String s){
-		return s.equals(this.name);
-	}
-	public boolean equalsByName(JixelEntity e){
-		return e.getName().equals(this.name);
+
+	/**
+	 * Compares if this entity's name is equal to a given String
+	 * @param name - The name to compare to
+	 * @return whether or not the string is equal to the name
+	 */
+	public boolean equalsByName(String name) {
+		return name.equals(this.name);
 	}
 
+	/**
+	 * Compares if two entities have the same name
+	 * @param e - Entity to compare
+	 * @return whether or not they have the same name
+	 */
+	public boolean equalsByName(JixelEntity entity) {
+		return entity.getName().equals(this.name);
+	}
+
+	/**
+	 * Applies the update if game isn't paused
+	 */
 	public void applyActions() {
 		if (!JixelGame.getPaused()) {
+			if (currentAnim != null) {
+				frameCount++;
+				updateAnim();
+			}
 			update();
 		}
 	}
 
+	/**
+	 * Update method to be run every frame
+	 */
 	public abstract void update();
 
 	/**
@@ -98,13 +194,17 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	public void setSpeed(double speed) {
 		this.speed = speed;
 	}
-	
-	public int compareTo(JixelEntity e){
-		if(e.getY()+getHeight() > getY()+getHeight()){
+
+	/**
+	 * Compares an entity by Y axis position
+	 * @return -1 if entity is lower, 0 if equal, 1 if higher
+	 */
+	public int compareTo(JixelEntity e) {
+		if (e.getY() + getHeight() > getY() + getHeight()) {
 			return -1;
-		}else if(e.getY() == getY()){
+		} else if (e.getY() == getY()) {
 			return 0;
-		}else{
+		} else {
 			return 1;
 		}
 	}

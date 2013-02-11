@@ -53,55 +53,102 @@ public abstract class JixelGame implements Runnable {
 		getScreen().addKeyListener(keyInput);
 		getScreen().addMouseListener(mouseInput);
 
+		//Adds a user-specified shutdown hook for the game
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				closeOperation();
+			}
+		});
+		
 		start();
 	}
 
+	/**
+	 * @return the title of the game
+	 */
 	public String getTitle() {
 		return GAME_TITLE;
 	}
 
+	/**
+	 * @return the main screen object for the engine
+	 */
 	public static JixelScreen getScreen() {
 		return screen;
 	}
 
+	/**
+	 * @return the current camera for the screen
+	 */
 	public static JixelCamera getCamera() {
 		return getScreen().getCamera();
 	}
 
+	/**
+	 * @return the console for the engine
+	 */
 	public static JixelConsole getConsole() {
 		return con;
 	}
 
+	/**
+	 * @return the main variable manager for the engine
+	 */
 	public static JixelVariableManager getVM() {
 		return vm;
 	}
 
+	/**
+	 * @return whether or not the game is paused
+	 */
 	public static boolean getPaused() {
 		return paused;
 	}
 
+	/**
+	 * Pauses or unpauses the game
+	 * @param newState
+	 */
 	public static void setPaused(boolean newState) {
 		paused = newState;
 	}
 
+	/**
+	 * @return the key input object
+	 */
 	public static JixelKeyInput getKeyInput() {
 		return keyInput;
 	}
 
+	/**
+	 * @return the mouse input object
+	 */
 	public static JixelMouseInput getMouseInput() {
 		return mouseInput;
 	}
 
+	/**
+	 * @return the timer that keeps track of fps
+	 */
 	public static JixelTimer getTimer() {
 		return timer;
 	}
 
+	/**
+	 * @return the main entity manager for the engine
+	 */
 	public static JixelEntityManager getEntityManager() {
 		return entities;
 	}
 
+	/**
+	 * The abstract method to run user code every frame
+	 */
 	public abstract void update();
 
+	/**
+	 * @return the lock for updating the game
+	 */
 	public static Object getUpdateLock() {
 		return updateLock;
 	}
@@ -117,7 +164,6 @@ public abstract class JixelGame implements Runnable {
 						update();
 						getCamera().getEntityManager().update();
 					}
-					getScreen().clear();
 					getScreen().render();
 				}
 			}
@@ -127,22 +173,29 @@ public abstract class JixelGame implements Runnable {
 		}
 	}
 
+	/**
+	 * Starts the main thread
+	 */
 	private synchronized void start() {
 		thread = new Thread(this, "Jixel Main");
 		thread.start();
 	}
 
+	/**
+	 * Abstract method the user can use to decide what happens when the game closes
+	 */
 	public abstract void closeOperation();
 
+	/**
+	 * Closes the game
+	 */
 	public void closeGame() {
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() {
-				closeOperation();
-			}
-		});
 		playing = false;
 	}
 
+	/**
+	 * Joins the main thread
+	 */
 	private synchronized void stop() {
 		try {
 			thread.join();

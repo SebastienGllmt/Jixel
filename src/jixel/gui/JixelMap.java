@@ -15,6 +15,9 @@ public class JixelMap {
 	private boolean holdsLevel = false;
 	private JixelSprite spriteSheet;
 
+	/**
+	 * Clears the map data
+	 */
 	public void clearMapData(){
 		width = 0;
 		height = 0;
@@ -22,10 +25,21 @@ public class JixelMap {
 		holdsLevel = false;
 	}
 	
+	/**
+	 * Sets the sprite sheet for the map
+	 * @param sprite - The sprite sheet
+	 */
 	public void setSpriteSheet(JixelSprite sprite){
 		this.spriteSheet = sprite;
 	}
 
+	/**
+	 * Returns an integer representation of a given length of bytes
+	 * @param in - The input stream to read from
+	 * @param length - The number of bytes to read
+	 * @return an integer representation of these bytes
+	 * @throws IOException - handled by the load level method
+	 */
 	private int getValue(InputStream in, int length) throws IOException{
 		byte[] byteArray = new byte[length];
 		for(int i=0; i<length; i++){
@@ -51,13 +65,19 @@ public class JixelMap {
 			holdsLevel = true;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-			JixelGame.getConsole().print("Map not found");
+			JixelGame.getConsole().print("Map not found at: " + f.getPath());
 		} catch (Exception e){
 			e.printStackTrace();
-			JixelGame.getConsole().print("Invalid map format");
+			JixelGame.getConsole().print("Failed to load tile sheet at " + f.getPath());
 		}
 	}
 	
+	/**
+	 * Returns the tileID at the given coordinates
+	 * @param x - x coordinate in the map
+	 * @param y - y coordinate in the map
+	 * @return the tile ID
+	 */
 	public int getTile(int x, int y){
 		if(x < 0 || x >= width || y < 0 || y >= height){
 			return -1;

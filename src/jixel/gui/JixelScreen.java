@@ -68,6 +68,10 @@ public class JixelScreen extends Canvas {
 		requestFocus();
 	}
 
+	/**
+	 * Attaches a new camera to the screen
+	 * @param camera - The new camera
+	 */
 	public void attachCamera(JixelCamera camera) {
 		synchronized (JixelGame.getUpdateLock()) {
 			if (camera != null) {
@@ -79,16 +83,27 @@ public class JixelScreen extends Canvas {
 		}
 	}
 
+	/**
+	 * @return the underlying camera for the screen
+	 */
 	public synchronized JixelCamera getCamera() {
 		return camera;
 	}
 
-	public synchronized void clear() {
+	/**
+	 * Clears the screen
+	 */
+	private synchronized void clear() {
 		for (int i = 0; i < pixels.length; i++) {
 			pixels[i] = 0;
 		}
 	}
 
+	/**
+	 * The main method to draw entities
+	 * @param g - Graphics object for the screen
+	 * @param entity - Entity to draw
+	 */
 	private void drawEntity(Graphics2D g, JixelEntity entity) {
 		int entityX = (int) entity.getX();
 		int entityY = (int) entity.getY();
@@ -99,9 +114,9 @@ public class JixelScreen extends Canvas {
 			if (entityY + y > camera.getMinY() && entityY + y < screenY + camera.getMaxY()) {
 				for (int x = 0; x < entity.getWidth(); x++) {
 					if (entityX + x > camera.getMinX() && entityX + x < screenX + camera.getMaxX()) {
-						int xx = entity.isFlipH() ? entity.getWidth() - x - 1 : x;
-						int yy = entity.isFlipV() ? entity.getHeight() - y - 1 : y;
-						entityPixels[x + y * entity.getWidth()] = entity.loadImg(entity.getTileID(), xx, yy);
+						int xx = entity.isFlipH() ? entity.getWidth() - x - 1 : x; //whether or not to flip horizontally
+						int yy = entity.isFlipV() ? entity.getHeight() - y - 1 : y; //whether or not to flip vertically
+						entityPixels[x + y * entity.getWidth()] = entity.getPixel(entity.getTileID(), xx, yy);
 					}
 				}
 			}
@@ -109,21 +124,26 @@ public class JixelScreen extends Canvas {
 		g.drawImage(img, entityX - screenX, entityY - screenY, entity.getWidth(), entity.getHeight(), null);
 	}
 
-	public synchronized void drawEntities() {
+	/**
+	 * Main method to draw entities
+	 */
+	private synchronized void drawSprites() {
 		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
 		g.setFont(font);
 		g.drawImage(image, 0, 0, width, height, null);
 
-		camera.drawUnder(g);
+		camera.drawUnder(g); //draw under entities what the camera wants
 
+		/**			Draw entities			**/
 		camera.getEntityManager().sort();
 		List<JixelEntity> entityList = camera.getEntityManager().getList();
 		for (int i = 0; i < entityList.size(); i++) {
 			drawEntity(g, entityList.get(i));
 		}
 
-		camera.drawOver(g);
+		camera.drawOver(g); //draw over entities what the camera wants
 
+		/**			Draw Console			**/
 		if (JixelGame.getConsole().isRunning()) {
 			Composite alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) .5);
 			g.setComposite(alpha);
@@ -139,10 +159,16 @@ public class JixelScreen extends Canvas {
 			}
 			g.drawString(JixelGame.getKeyInput().getConsoleMsg(), tileSize + (tileSize >> 1), height - (tileSize >> 1) + 6);
 		}
+		
 		g.dispose();
 		bs.show();
 	}
 
+	/**
+	 * Adjusts the screen's offset
+	 * @param xOffset
+	 * @param yOffset
+	 */
 	public void adjustScreen(int xOffset, int yOffset) {
 		if (xOffset < 0) {
 			xOffset = 0;
@@ -162,7 +188,10 @@ public class JixelScreen extends Canvas {
 		JixelGame.getVM().setValue("Jixel_yOffset", yOffset);
 	}
 
-	private synchronized void updateCamera(int xOffset, int yOffset) {
+	/**
+	 * Updates the screen's location based off the current locked entity
+	 */
+	private synchronized void updateCamera() {
 		if (camera.getLockedEntity() != null) {
 			int x = (int) camera.getLockedEntity().getX() - (width >> 1);
 			int y = (int) camera.getLockedEntity().getY() - (height >> 1);
@@ -170,6 +199,9 @@ public class JixelScreen extends Canvas {
 		}
 	}
 
+	/**
+	 * Updates mouse position on the screen
+	 */
 	private void updateMouse() {
 		Point mousePoint = MouseInfo.getPointerInfo().getLocation();
 		SwingUtilities.convertPointFromScreen(mousePoint, this);
@@ -187,67 +219,107 @@ public class JixelScreen extends Canvas {
 		}
 	}
 
+	/**
+	 * Main render method for the screen
+	 */
 	public synchronized void render() {
+		clear();
 		updateMouse();
-		updateCamera(screenX, screenY);
+		updateCamera();
 		if (camera.getMap().canLoad()) {
 			for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
 				int yy = y + screenY;
 				for (int x = camera.getMinX(); x < camera.getMaxX(); x++) {
 					int xx = x + screenX;
 					int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
-					pixels[x + y * width] = camera.getMap().getSpriteSheet().loadImg(tileID, xx & 31, yy & 31);
+					pixels[x + y * width] = camera.getMap().getSpriteSheet().getPixel(tileID, xx & 31, yy & 31);
 				}
 			}
 		}
-		drawEntities();
+		drawSprites();
 	}
 
+	/**
+	 * @return the width of the screen
+	 */
 	public int getWidth() {
 		return width;
 	}
 
+	/**
+	 * @param width - Sets a new width for the screen
+	 */
 	public void setWidth(int width) {
 		this.width = width;
 	}
 
-	public int getMapWidth() {
-		return camera.getMap().getWidth() << FIXSHIFT;
-	}
-
-	public int getMapHeight() {
-		return camera.getMap().getHeight() << FIXSHIFT;
-	}
-
+	/**
+	 * @return the height of the screen
+	 */
 	public int getHeight() {
 		return height;
 	}
 
+	/**
+	 * @param - Sets a new height for the screen
+	 */
 	public void setHeight(int height) {
 		this.height = height;
 	}
 
+	/**
+	 * @return the width of the current map
+	 */
+	public int getMapWidth() {
+		return camera.getMap().getWidth() << FIXSHIFT;
+	}
+
+	/**
+	 * @return the height of the current map
+	 */
+	public int getMapHeight() {
+		return camera.getMap().getHeight() << FIXSHIFT;
+	}
+
+	/**
+	 * @return the current scale of the screen
+	 */
 	public int getScale() {
 		return scale;
 	}
 
+	/**
+	 * @param
+	 */
 	public void setScale(int scale) {
 		this.scale = scale;
 	}
 
+	/**
+	 * @return the tile size
+	 */
 	public int getTileSize() {
 		return tileSize;
 	}
 
+	/**
+	 * @param
+	 */
 	public void setTileSize(int tileSize) {
 		this.tileSize = tileSize;
 	}
 
-	public void setTitle(String newTitle) {
-		frame.setTitle(newTitle);
-	}
-
+	/**
+	 * @return the bitwise shift equivalent to the tile size
+	 */
 	public int getFixshift() {
 		return FIXSHIFT;
+	}
+
+	/**
+	 * @param
+	 */
+	public void setTitle(String newTitle) {
+		frame.setTitle(newTitle);
 	}
 }
