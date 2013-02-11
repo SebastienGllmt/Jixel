@@ -1,11 +1,15 @@
 package jixel.gui;
 
 import java.awt.Graphics2D;
+
+import jixel.entity.JixelEntity;
 import jixel.entity.JixelEntityManager;
 
 public abstract class JixelCamera {
 	
 	private int minX, maxX, minY, maxY;
+	private JixelMap map = new JixelMap();
+	private JixelEntity lockedEntity;
 	
 	public JixelCamera(int minX, int minY, int maxX, int maxY){
 		this.minX = minX;
@@ -18,6 +22,34 @@ public abstract class JixelCamera {
 	public abstract void drawOver(Graphics2D g);
 	
 	public abstract JixelEntityManager getEntityManager();
+
+	/**
+	 * @return the map
+	 */
+	public JixelMap getMap() {
+		return map;
+	}
+
+	/**
+	 * @return the lockedEntity
+	 */
+	public JixelEntity getLockedEntity() {
+		return lockedEntity;
+	}
+
+	/**
+	 * @param lockedEntity the lockedEntity to set
+	 */
+	public void setLockedEntity(JixelEntity lockedEntity) {
+		this.lockedEntity = lockedEntity;
+	}
+
+	/**
+	 * @param map the map to set
+	 */
+	public void setMap(JixelMap map) {
+		this.map = map;
+	}
 
 	/**
 	 * @return the minX

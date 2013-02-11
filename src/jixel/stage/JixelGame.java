@@ -16,7 +16,6 @@ public abstract class JixelGame implements Runnable {
 	private static JixelKeyInput keyInput;
 	private static JixelMouseInput mouseInput;
 	private static JixelTimer timer;
-	private static JixelMap map;
 
 	private static JixelEditorScreen editorScreen;
 	private static JixelGameScreen gameScreen;
@@ -43,21 +42,19 @@ public abstract class JixelGame implements Runnable {
 		getVM().newVar("Jixel_lockedEntity", null);
 		getVM().newVar("Jixel_entityList", entities.getList());
 
-		screen = new JixelScreen(title, width, height, scale, tileSize);
+		editorScreen = new JixelEditorScreen(0, 0, width, height);
+		gameScreen = new JixelGameScreen(0, 0, width, height);
+		
+		screen = new JixelScreen(title, gameScreen, width, height, scale, tileSize);
 		timer = new JixelTimer();
 
 		con = new JixelConsole();
 
 		keyInput = new JixelKeyInput();
 		mouseInput = new JixelMouseInput();
-
-		editorScreen = new JixelEditorScreen(0, 0, width, height);
-		gameScreen = new JixelGameScreen(0, 0, width, height);
 		
-		getScreen().attachCamera(gameScreen);
 		getScreen().addKeyListener(keyInput);
 		getScreen().addMouseListener(mouseInput);
-		map = new JixelMap();
 
 		start();
 	}
@@ -66,12 +63,11 @@ public abstract class JixelGame implements Runnable {
 		return GAME_TITLE;
 	}
 
-	public static JixelMap getMap() {
-		return map;
-	}
-
 	public static JixelScreen getScreen() {
 		return screen;
+	}
+	public static JixelCamera getCamera(){
+		return getScreen().getCamera();
 	}
 
 	public static JixelConsole getConsole() {
@@ -112,17 +108,10 @@ public abstract class JixelGame implements Runnable {
 		return updateLock;
 	}
 
-	public void attachCamera(JixelCamera camera) {
-		synchronized (getUpdateLock()) {
-			getScreen().attachCamera(camera);
-		}
-	}
-
 	public abstract void loadState();
 
 	@Override
 	public void run() {
-		System.out.println(fps);
 		getTimer().setFPS(fps);
 		while (playing) {
 			synchronized (getUpdateLock()) {
@@ -131,25 +120,25 @@ public abstract class JixelGame implements Runnable {
 					if (!getPaused()) {
 						getKeyInput().updateKeyboard();
 						update();
-						getScreen().getCamera().getEntityManager().update();
+						getCamera().getEntityManager().update();
 					}
 					getScreen().clear();
-					if (getMap().canLoad()) {
-						getScreen().drawMap();
-					}
-					getScreen().drawEntities();
+					getScreen().render();
 				}
 			}
 		}
 		stop();
 	}
 
-	public synchronized void start() {
+	private synchronized void start() {
 		thread = new Thread(this, "Jixel Main");
 		thread.start();
 	}
-
-	public synchronized void stop() {
+	
+	public void closeGame(){
+		playing = false;
+	}
+	private synchronized void stop() {
 		try {
 			thread.join();
 		} catch (InterruptedException e) {

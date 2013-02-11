@@ -36,9 +36,11 @@ public class JixelScreen extends Canvas {
 
 	private Font font = new Font("Courier", Font.PLAIN, 12);
 
-	private JixelEntity lockedEntity;
-
-	public JixelScreen(String title, int width, int height, int scale, int tileSize) {
+	public JixelScreen(String title, JixelCamera camera, int width, int height, int scale, int tileSize) {
+		if (camera == null) {
+			throw new NullPointerException();
+		}
+		this.camera = camera;
 		this.width = width;
 		this.height = height;
 		this.tileSize = tileSize;
@@ -66,17 +68,19 @@ public class JixelScreen extends Canvas {
 		requestFocus();
 	}
 
-	public synchronized void attachCamera(JixelCamera camera) {
-		this.camera = camera;
+	public void attachCamera(JixelCamera camera) {
+		synchronized (JixelGame.getUpdateLock()) {
+			if (camera != null) {
+				this.camera = camera;
+			} else {
+				System.err.println("Can not set camera to null!");
+				JixelGame.getConsole().print("Can not set camera to null!");
+			}
+		}
 	}
 
 	public synchronized JixelCamera getCamera() {
 		return camera;
-	}
-
-	public synchronized void lockOn(JixelEntity entity) {
-		JixelGame.getVM().setValue("Jixel_lockedEntity", entity);
-		lockedEntity = entity;
 	}
 
 	public synchronized void clear() {
@@ -92,9 +96,9 @@ public class JixelScreen extends Canvas {
 		int[] entityPixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
 
 		for (int y = 0; y < entity.getHeight(); y++) {
-			if (entityY + y > 0 && entityY + y < getMapHeight()) {
+			if (entityY + y > camera.getMinY() && entityY + y < screenY + camera.getMaxY()) {
 				for (int x = 0; x < entity.getWidth(); x++) {
-					if (entityX + x > 0 && entityX + x < getMapWidth()) {
+					if (entityX + x > camera.getMinX() && entityX + x < screenX + camera.getMaxX()) {
 						int xx = entity.isFlipH() ? entity.getWidth() - x - 1 : x;
 						int yy = entity.isFlipV() ? entity.getHeight() - y - 1 : y;
 						entityPixels[x + y * entity.getWidth()] = entity.loadImg(entity.getTileID(), xx, yy);
@@ -159,9 +163,9 @@ public class JixelScreen extends Canvas {
 	}
 
 	private synchronized void updateCamera(int xOffset, int yOffset) {
-		if (lockedEntity != null) {
-			int x = (int) lockedEntity.getX() - (width >> 1);
-			int y = (int) lockedEntity.getY() - (height >> 1);
+		if (camera.getLockedEntity() != null) {
+			int x = (int) camera.getLockedEntity().getX() - (width >> 1);
+			int y = (int) camera.getLockedEntity().getY() - (height >> 1);
 			adjustScreen(x, y);
 		}
 	}
@@ -183,21 +187,20 @@ public class JixelScreen extends Canvas {
 		}
 	}
 
-	public synchronized void drawMap() {
+	public synchronized void render() {
 		updateMouse();
 		updateCamera(screenX, screenY);
-		for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
-			int yy = y + screenY;
-			for (int x = camera.getMinX(); x < camera.getMaxX(); x++) {
-				int xx = x + screenX;
-				int tileID = JixelGame.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
-				pixels[x + y * width] = JixelGame.getMap().getSpriteSheet().loadImg(tileID, xx & 31, yy & 31);
+		if (camera.getMap().canLoad()) {
+			for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
+				int yy = y + screenY;
+				for (int x = camera.getMinX(); x < camera.getMaxX(); x++) {
+					int xx = x + screenX;
+					int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
+					pixels[x + y * width] = camera.getMap().getSpriteSheet().loadImg(tileID, xx & 31, yy & 31);
+				}
 			}
 		}
-	}
-
-	public JixelEntity getLockedEntity() {
-		return lockedEntity;
+		drawEntities();
 	}
 
 	public int getWidth() {
@@ -209,11 +212,11 @@ public class JixelScreen extends Canvas {
 	}
 
 	public int getMapWidth() {
-		return JixelGame.getMap().getWidth() << FIXSHIFT;
+		return camera.getMap().getWidth() << FIXSHIFT;
 	}
 
 	public int getMapHeight() {
-		return JixelGame.getMap().getHeight() << FIXSHIFT;
+		return camera.getMap().getHeight() << FIXSHIFT;
 	}
 
 	public int getHeight() {
