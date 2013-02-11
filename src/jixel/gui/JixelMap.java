@@ -2,6 +2,7 @@ package jixel.gui;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -13,7 +14,7 @@ public class JixelMap {
 	private JixelTile[] tiles;
 	private boolean holdsLevel = false;
 	private JixelSprite spriteSheet;
-	
+
 	public void clearMapData(){
 		width = 0;
 		height = 0;
@@ -25,42 +26,69 @@ public class JixelMap {
 		this.spriteSheet = sprite;
 	}
 
+	private int getValue(InputStream in, int length) throws IOException{
+		byte[] byteArray = new byte[length];
+		for(int i=0; i<length; i++){
+			byteArray[i] = (byte) in.read();
+		}
+		int result = 0;
+		for(int i=0; i<length; i++){
+			result += byteArray[i]<<(i<<3);
+		}
+		return result;
+	}
 	public void loadLevel(String path) {
 		File f = new File(path);
 		try(InputStream in = new FileInputStream(f)) {
-			width = in.read();
-			height = in.read();
+			width = getValue(in, 4);
+			height = getValue(in, 4);
 			tiles = new JixelTile[width*height];
 			for(int y=0; y<height; y++){
 				for(int x=0; x<width; x++){
-					tiles[x+y*width] = new JixelTile(in.read());
+					tiles[x+y*width] = new JixelTile(getValue(in, 2));
 				}
 			}
 			holdsLevel = true;
-		} catch (IOException e) {
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			JixelGame.getConsole().print("Map not found");
+		} catch (Exception e){
+			e.printStackTrace();
+			JixelGame.getConsole().print("Invalid map format");
 		}
 	}
 	
-	public JixelSprite getSpriteSheet(){
-		return spriteSheet;
-	}
-	
-	public boolean canLoad(){
-		return (spriteSheet != null && holdsLevel);
-	}
-
-	public int getWidth(){
-		return width;
-	}
-	public int getHeight(){
-		return height;
-	}
 	public int getTile(int x, int y){
 		if(x < 0 || x >= width || y < 0 || y >= height){
 			return -1;
 		}
 		return tiles[x+y*width].getTileID();
+	}
+	
+	/**
+	 * @return the underlying sprite sheet for the sprite
+	 */
+	public JixelSprite getSpriteSheet(){
+		return spriteSheet;
+	}
+	
+	/**
+	 * @return whether or not the map is loadable
+	 */
+	public boolean canLoad(){
+		return (spriteSheet != null && holdsLevel);
+	}
+
+	/**
+	 * @return How many tiles there are horizontally
+	 */
+	public int getWidth(){
+		return width;
+	}
+	/**
+	 * @return How many tiles there are vertically
+	 */
+	public int getHeight(){
+		return height;
 	}
 }
