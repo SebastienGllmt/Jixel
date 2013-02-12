@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	private double speed;
 
 	private String currentAnim = null;
-	private int animIndex = 0, fps = 0, frameCount = 0;
+	private int animIndex = 1, fps = 0, frameCount = 0;
 	private final Map<String, List<Integer>> animMap = new HashMap<String, List<Integer>>();
 
 	public JixelEntity(final String IMG_PATH, final String ANIM_PATH, String name, int tileX, int tileY, double speed) {
@@ -47,13 +48,13 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 			fps = scan.nextInt();
 			scan.nextLine();
 			while (scan.hasNextLine()) {
-				String name = scan.nextLine();
+				String name = scan.next();
 				List<Integer> tiles = new ArrayList<Integer>();
-				while (scan.hasNextInt()) {
-					tiles.add(scan.nextInt());
-				}
 				if (animMap.size() == 0) {
 					currentAnim = name;
+				}
+				while (scan.hasNextInt()) {
+					tiles.add(scan.nextInt());
 				}
 				animMap.put(name, tiles);
 			}
@@ -71,11 +72,15 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	 */
 	private void updateAnim() {
 		if (frameCount == fps) {
-			frameCount=0;
-			animIndex++;
 			List<Integer> tiles = animMap.get(currentAnim);
+			frameCount = 0;
+			animIndex++;
 			if (animIndex == tiles.size()) {
-				animIndex = 0;
+				if (tiles.get(0) == 0) {
+					animIndex--;
+				} else {
+					animIndex = 1;
+				}
 			}
 			setTileID(tiles.get(animIndex));
 		}
@@ -84,8 +89,8 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	public void playAnim(String name) {
 		if (animMap.containsKey(name)) {
 			if (!name.equals(currentAnim)) {
+				animIndex = 1;
 				currentAnim = name;
-				animIndex = 0;
 			}
 		} else {
 			JixelGame.getConsole().print("No anim called " + name + " found in " + this.name);
@@ -126,7 +131,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	 */
 	public void applyActions() {
 		if (!JixelGame.getPaused()) {
-			if (currentAnim != null) {
+			if (currentAnim != null && fps > 0) {
 				frameCount++;
 				updateAnim();
 			}
