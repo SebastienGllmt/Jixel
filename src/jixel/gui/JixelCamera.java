@@ -1,5 +1,6 @@
 package jixel.gui;
 
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 
 import jixel.entity.JixelEntity;
@@ -105,6 +106,43 @@ public abstract class JixelCamera {
 	 */
 	public void setMaxY(int maxY) {
 		this.maxY = maxY;
+	}
+	
+	/**
+	 * @return the absolute height of the camera
+	 */
+	public int getHeight(){
+		return maxY-minY;
+	}
+	/**
+	 * @return the absolute width of the camera
+	 */
+	public int getWidth(){
+		return maxX-minX;
+	}
+	/**
+	 * @return the size of the camera
+	 */
+	public Dimension getSize(){
+		return new Dimension(getWidth(), getHeight());
+	}
+	/**
+	 * Sets the max size of the camera
+	 * @param maxX - The max x position the camera will display
+	 * @param maxY - The max y position the camera will display
+	 */
+	public void setMaxSize(int maxX, int maxY){
+		setMaxX(maxX);
+		setMaxY(maxY);
+	}
+	/**
+	 * Sets the min size of the camera
+	 * @param minX - The min x position the camera will display
+	 * @param minY - The min y position the camera will display
+	 */
+	public void setMinSize(int minX, int minY){
+		setMinX(minX);
+		setMinY(minY);
 	}
 	
 }

@@ -30,21 +30,20 @@ public class JixelScreen extends Canvas {
 	private JFrame frame;
 	private int screenX, screenY;
 	private int mouseX, mouseY;
+	private int backgroundColor = 0;
 
 	private BufferStrategy bs;
 	private BufferedImage image;
 
-	private Font font = new Font("Courier", Font.PLAIN, 12);
-
-	public JixelScreen(String title, JixelCamera camera, int width, int height, int scale, int tileSize) {
+	public JixelScreen(String title, JixelCamera camera, int width, int height, int scale, int tileSizeLog2) {
 		if (camera == null) {
 			throw new NullPointerException();
 		}
 		this.camera = camera;
 		this.width = width;
 		this.height = height;
-		this.tileSize = tileSize;
-		FIXSHIFT = (int) (Math.log(tileSize) / Math.log(2));
+		this.tileSize = 1 << tileSizeLog2;
+		FIXSHIFT = tileSizeLog2;
 		JixelGame.getVM().newVar("Jixel_xOffset", 0);
 		JixelGame.getVM().newVar("Jixel_yOffset", 0);
 
@@ -66,6 +65,17 @@ public class JixelScreen extends Canvas {
 		pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 
 		requestFocus();
+	}
+
+	private synchronized void resizeScreen(int width, int height) {
+		synchronized (JixelGame.getUpdateLock()) {
+			Dimension size = new Dimension(width * scale, height * scale);
+			setPreferredSize(size);
+			frame.setSize(getWidth(), getHeight());
+			frame.setLocationRelativeTo(null);
+			image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+			pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+		}
 	}
 
 	/**
@@ -91,11 +101,34 @@ public class JixelScreen extends Canvas {
 	}
 
 	/**
+	 * Returns the current background color for the screen
+	 */
+	public Color getBackground() {
+		return new Color(backgroundColor);
+	}
+
+	/**
+	 * Sets the background color for the screen
+	 * @param color - The new color
+	 */
+	public void setBackground(int color) {
+		this.backgroundColor = color;
+	}
+
+	/**
+	 * Sets the background color for the screen
+	 * @param c - The new color
+	 */
+	public void setBackground(Color c) {
+		this.backgroundColor = c.getRGB();
+	}
+
+	/**
 	 * Clears the screen
 	 */
 	private synchronized void clear() {
 		for (int i = 0; i < pixels.length; i++) {
-			pixels[i] = 0;
+			pixels[i] = backgroundColor;
 		}
 	}
 
@@ -107,13 +140,19 @@ public class JixelScreen extends Canvas {
 	private void drawEntity(Graphics2D g, JixelEntity entity) {
 		int entityX = (int) entity.getX();
 		int entityY = (int) entity.getY();
+		if (entityX > camera.getMaxX() + screenX || entityX + entity.getWidth() < screenX + camera.getMinX()) {
+			return;
+		}
+		if (entityY > camera.getMaxY() + screenY || entityY + entity.getHeight() < screenY + camera.getMinY()) {
+			return;
+		}
 		BufferedImage img = new BufferedImage(entity.getWidth(), entity.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		int[] entityPixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
 
 		for (int y = 0; y < entity.getHeight(); y++) {
-			if (entityY + y > camera.getMinY() && entityY + y < screenY + camera.getMaxY()) {
+			if (entityY + y > screenY + camera.getMinY()-1 && entityY + y < screenY + camera.getMaxY()) {
 				for (int x = 0; x < entity.getWidth(); x++) {
-					if (entityX + x > camera.getMinX() && entityX + x < screenX + camera.getMaxX()) {
+					if (entityX + x > screenX + camera.getMinX()-1 && entityX + x < screenX + camera.getMaxX()) {
 						int xx = entity.isFlipH() ? entity.getWidth() - x - 1 : x; //whether or not to flip horizontally
 						int yy = entity.isFlipV() ? entity.getHeight() - y - 1 : y; //whether or not to flip vertically
 						entityPixels[x + y * entity.getWidth()] = entity.getPixel(entity.getTileID(), xx, yy);
@@ -129,12 +168,12 @@ public class JixelScreen extends Canvas {
 	 */
 	private synchronized void drawSprites() {
 		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
-		g.setFont(font);
+		g.setFont(this.getFont());
 		g.drawImage(image, 0, 0, width, height, null);
 
 		camera.drawUnder(g); //draw under entities what the camera wants
 
-		/**			Draw entities			**/
+		/** Draw entities **/
 		camera.getEntityManager().sort();
 		List<JixelEntity> entityList = camera.getEntityManager().getList();
 		for (int i = 0; i < entityList.size(); i++) {
@@ -143,10 +182,9 @@ public class JixelScreen extends Canvas {
 
 		camera.drawOver(g); //draw over entities what the camera wants
 
-		/**			Draw Console			**/
+		/** Draw Console **/
 		if (JixelGame.getConsole().isRunning()) {
-			Composite alpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) .5);
-			g.setComposite(alpha);
+			g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) .5));
 			g.setColor(Color.BLACK);
 			g.fillRect(0, 0, width, height);
 
@@ -155,11 +193,11 @@ public class JixelScreen extends Canvas {
 			g.drawLine(tileSize, height - tileSize, width - tileSize, height - tileSize);
 			List<String> messageList = JixelGame.getConsole().getMessageList();
 			for (int i = 0; i < messageList.size(); i++) {
-				g.drawString(messageList.get(i), tileSize + (tileSize >> 1), height - tileSize - (tileSize >> 1) - (i * 24));
+				g.drawString(messageList.get(i), tileSize + (tileSize >> 1), height - tileSize - (tileSize >> 1) - ((i << 3) * 3));
 			}
 			g.drawString(JixelGame.getKeyInput().getConsoleMsg(), tileSize + (tileSize >> 1), height - (tileSize >> 1) + 6);
 		}
-		
+
 		g.dispose();
 		bs.show();
 	}
@@ -227,6 +265,12 @@ public class JixelScreen extends Canvas {
 		updateMouse();
 		updateCamera();
 		if (camera.getMap().canLoad()) {
+			if (camera.getMinY() < 0 || camera.getMinX() < 0) {
+				throw new ArrayIndexOutOfBoundsException("Camera can not have a negative view");
+			}
+			if (camera.getMaxY() > getHeight() || camera.getMaxX() > getWidth()) {
+				throw new ArrayIndexOutOfBoundsException("Camera can not have a greater view than the screen");
+			}
 			for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
 				int yy = y + screenY;
 				for (int x = camera.getMinX(); x < camera.getMaxX(); x++) {
@@ -251,6 +295,7 @@ public class JixelScreen extends Canvas {
 	 */
 	public void setWidth(int width) {
 		this.width = width;
+		resizeScreen(getWidth(), getHeight());
 	}
 
 	/**
@@ -265,6 +310,35 @@ public class JixelScreen extends Canvas {
 	 */
 	public void setHeight(int height) {
 		this.height = height;
+		resizeScreen(getWidth(), getHeight());
+	}
+
+	/**
+	 * Returns the size of the screen
+	 */
+	public Dimension getSize() {
+		return new Dimension(getWidth(), getHeight());
+	}
+
+	/**
+	 * Resizes the screen
+	 * @param dimension - The new dimension of the screen
+	 */
+	public void setSize(Dimension dimension) {
+		this.width = dimension.width;
+		this.height = dimension.height;
+		resizeScreen(getWidth(), getHeight());
+	}
+
+	/**
+	 * Resizes the screen
+	 * @param width - The new width
+	 * @param height - The new height
+	 */
+	public void setSize(int width, int height) {
+		this.width = width;
+		this.height = height;
+		resizeScreen(getWidth(), getHeight());
 	}
 
 	/**

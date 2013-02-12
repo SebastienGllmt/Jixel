@@ -30,7 +30,7 @@ public abstract class JixelGame implements Runnable {
 
 	private static Thread thread; // thread for the update/render
 
-	public JixelGame(String title, int width, int height, int scale, int tileSize, int fps) {
+	public JixelGame(String title, int width, int height, int scale, int tileSizeLog2, int fps) {
 		GAME_TITLE = title;
 
 		vm = new JixelVariableManager();
@@ -41,7 +41,7 @@ public abstract class JixelGame implements Runnable {
 		editorScreen = new JixelEditorScreen(0, 0, width, height);
 		gameScreen = new JixelGameScreen(0, 0, width, height);
 
-		screen = new JixelScreen(title, gameScreen, width, height, scale, tileSize);
+		screen = new JixelScreen(title, gameScreen, width, height, scale, tileSizeLog2);
 		timer = new JixelTimer();
 		timer.setFPS(fps);
 
