@@ -3,15 +3,14 @@ package jixel.gui;
 import java.awt.AlphaComposite;
 import java.awt.Canvas;
 import java.awt.Color;
-import java.awt.Composite;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -25,7 +24,7 @@ public class JixelScreen extends Canvas {
 
 	private int width, height, scale, tileSize;
 	private final int FIXSHIFT;
-	private JixelCamera camera;
+	private List<JixelCamera> cameraList = new ArrayList<JixelCamera>();
 	private int[] pixels;
 	private JFrame frame;
 	private int screenX, screenY;
@@ -35,11 +34,10 @@ public class JixelScreen extends Canvas {
 	private BufferStrategy bs;
 	private BufferedImage image;
 
-	public JixelScreen(String title, JixelCamera camera, int width, int height, int scale, int tileSizeLog2) {
-		attachCamera(camera);
+	public JixelScreen(String title, int width, int height, int scale, int tileSizeLog2) {
 		if (width < 0 || height < 0 || scale < 0 || tileSizeLog2 < 0) {
 			FIXSHIFT = 0;
-			JixelGame.getConsole().printErr("Invalid arguments for JixelScreen", new IllegalArgumentException());
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Invalid arguments for JixelScreen"));
 			System.exit(1);
 		} else {
 			this.width = width;
@@ -86,7 +84,7 @@ public class JixelScreen extends Canvas {
 				pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 			}
 		} else {
-			JixelGame.getConsole().printErr("Can not have a negative sized screen", new IllegalArgumentException());
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not have a negative sized screen"));
 		}
 	}
 
@@ -97,18 +95,62 @@ public class JixelScreen extends Canvas {
 	public void attachCamera(JixelCamera camera) {
 		synchronized (JixelGame.getUpdateLock()) {
 			if (camera != null) {
-				this.camera = camera;
+				cameraList.add(camera);
 			} else {
-				JixelGame.getConsole().printErr("Can not set camera to null!", new NullPointerException());
+				JixelGame.getConsole().printErr(new NullPointerException("Can not set camera to null!"));
 			}
 		}
 	}
 
 	/**
-	 * @return the underlying camera for the screen
+	 * Removes the first instance of a given camera from the camera list
+	 * @param camera - The camera to remove
 	 */
-	public synchronized JixelCamera getCamera() {
-		return camera;
+	public void removeCamera(JixelCamera camera) {
+		synchronized (JixelGame.getUpdateLock()) {
+			if (camera != null) {
+				cameraList.remove(camera);
+			}
+		}
+	}
+
+	/**
+	 * Empties the camera list
+	 */
+	public void resetCameraList() {
+		synchronized (JixelGame.getUpdateLock()) {
+			cameraList = new ArrayList<JixelCamera>();
+		}
+	}
+
+	/**
+	 * Adds all cameras from one list to the current one
+	 * @param cameraList - The list of cameras to add
+	 */
+	public void addAllCamera(List<JixelCamera> cameraList) {
+		synchronized (JixelGame.getUpdateLock()) {
+			this.cameraList.addAll(cameraList);
+		}
+	}
+
+	/**
+	 * @return the list of cameras for the screen
+	 */
+	public List<JixelCamera> getCameraList() {
+		synchronized (JixelGame.getUpdateLock()) {
+			return this.cameraList;
+		}
+	}
+	
+	/**
+	 * Updates all the cameras
+	 */
+	public void update(){
+		synchronized(JixelGame.getUpdateLock()){
+			for(JixelCamera camera : cameraList){
+				camera.getEntityManager().update();
+			}
+		}
 	}
 
 	/**
@@ -134,7 +176,7 @@ public class JixelScreen extends Canvas {
 		if (c != null) {
 			this.backgroundColor = c.getRGB();
 		} else {
-			JixelGame.getConsole().printErr("Can not set background color to null", new NullPointerException());
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set background color to null"));
 		}
 	}
 
@@ -152,7 +194,7 @@ public class JixelScreen extends Canvas {
 	 * @param g - Graphics object for the screen
 	 * @param entity - Entity to draw
 	 */
-	private void drawEntity(Graphics2D g, JixelEntity entity) {
+	private void drawEntity(JixelCamera camera, Graphics2D g, JixelEntity entity) {
 		int entityX = (int) entity.getX();
 		int entityY = (int) entity.getY();
 		if (entityX > camera.getMaxX() + screenX || entityX + entity.getWidth() < screenX + camera.getMinX()) {
@@ -181,18 +223,14 @@ public class JixelScreen extends Canvas {
 	/**
 	 * Main method to draw entities
 	 */
-	private synchronized void drawSprites() {
-		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
-		g.setFont(this.getFont());
-		g.drawImage(image, 0, 0, width, height, null);
-
+	private synchronized void drawSprites(JixelCamera camera, Graphics2D g) {
 		camera.drawUnder(g); //draw under entities what the camera wants
 
 		/** Draw entities **/
 		camera.getEntityManager().sort();
 		List<JixelEntity> entityList = camera.getEntityManager().getList();
 		for (int i = 0; i < entityList.size(); i++) {
-			drawEntity(g, entityList.get(i));
+			drawEntity(camera, g, entityList.get(i));
 		}
 
 		camera.drawOver(g); //draw over entities what the camera wants
@@ -212,9 +250,6 @@ public class JixelScreen extends Canvas {
 			}
 			g.drawString(JixelGame.getKeyInput().getConsoleMsg(), tileSize + (tileSize >> 1), height - (tileSize >> 1) + 6);
 		}
-
-		g.dispose();
-		bs.show();
 	}
 
 	/**
@@ -222,18 +257,18 @@ public class JixelScreen extends Canvas {
 	 * @param xOffset
 	 * @param yOffset
 	 */
-	public void adjustScreen(int xOffset, int yOffset) {
+	public void adjustScreen(JixelCamera camera, int xOffset, int yOffset) {
 		if (xOffset < 0) {
 			xOffset = 0;
 		}
 		if (yOffset < 0) {
 			yOffset = 0;
 		}
-		if (xOffset > getMapWidth() - getWidth()) {
-			xOffset = getMapWidth() - getWidth();
+		if (xOffset > (camera.getMap().getWidth()<<FIXSHIFT) - getWidth()) {
+			xOffset = (camera.getMap().getWidth()<<FIXSHIFT) - getWidth();
 		}
-		if (yOffset > getMapHeight() - getHeight()) {
-			yOffset = getMapHeight() - getHeight();
+		if (yOffset > (camera.getMap().getHeight()<<FIXSHIFT) - getHeight()) {
+			yOffset = (camera.getMap().getHeight()<<FIXSHIFT) - getHeight();
 		}
 		screenX = xOffset;
 		JixelGame.getVM().setValue("Jixel_xOffset", xOffset);
@@ -244,11 +279,11 @@ public class JixelScreen extends Canvas {
 	/**
 	 * Updates the screen's location based off the current locked entity
 	 */
-	private synchronized void updateCamera() {
+	private synchronized void updateCamera(JixelCamera camera) {
 		if (camera.getLockedEntity() != null) {
 			int x = (int) camera.getLockedEntity().getX() - (width >> 1);
 			int y = (int) camera.getLockedEntity().getY() - (height >> 1);
-			adjustScreen(x, y);
+			adjustScreen(camera, x, y);
 		}
 	}
 
@@ -278,24 +313,36 @@ public class JixelScreen extends Canvas {
 	public synchronized void render() {
 		clear();
 		updateMouse();
-		updateCamera();
-		if (camera.getMap().canLoad()) {
-			if (camera.getMinY() < 0 || camera.getMinX() < 0) {
-				throw new ArrayIndexOutOfBoundsException("Camera can not have a negative view");
-			}
-			if (camera.getMaxY() > getHeight() || camera.getMaxX() > getWidth()) {
-				throw new ArrayIndexOutOfBoundsException("Camera can not have a greater view than the screen");
-			}
-			for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
-				int yy = y + screenY;
-				for (int x = camera.getMinX(); x < camera.getMaxX(); x++) {
-					int xx = x + screenX;
-					int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
-					pixels[x + y * width] = camera.getMap().getSpriteSheet().getPixel(tileID, xx & 31, yy & 31);
+		
+		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
+		g.setFont(this.getFont());
+		
+		for (JixelCamera camera : cameraList) {
+			updateCamera(camera);
+			if (camera.getMap().canLoad()) {
+				if (camera.getMinY() < 0 || camera.getMinX() < 0) {
+					JixelGame.getConsole().printErr(new ArrayIndexOutOfBoundsException("Camera can not have a negative view"));
+				}
+				if (camera.getMaxY() > getHeight() || camera.getMaxX() > getWidth()) {
+					JixelGame.getConsole().printErr(new ArrayIndexOutOfBoundsException("Camera can not have a greater view than the screen"));
+				}
+				for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
+					int yy = y + screenY;
+					for (int x = camera.getMinX(); x < camera.getMaxX(); x++) {
+						int xx = x + screenX;
+						int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
+						pixels[x + y * width] = camera.getMap().getSpriteSheet().getPixel(tileID, xx & 31, yy & 31);
+					}
 				}
 			}
+		}		
+		g.drawImage(image, 0, 0, width, height, null);
+		
+		for(JixelCamera camera : cameraList){
+			drawSprites(camera, g);
 		}
-		drawSprites();
+		g.dispose();
+		bs.show();
 	}
 
 	/**
@@ -313,7 +360,7 @@ public class JixelScreen extends Canvas {
 			this.width = width;
 			resizeScreen(getWidth(), getHeight());
 		} else {
-			JixelGame.getConsole().printErr("Can not have a negative sized screen", new IllegalArgumentException());
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not have a negative sized screen"));
 		}
 	}
 
@@ -332,7 +379,7 @@ public class JixelScreen extends Canvas {
 			this.height = height;
 			resizeScreen(getWidth(), getHeight());
 		} else {
-			JixelGame.getConsole().printErr("Can not have a negative sized screen", new IllegalArgumentException());
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not have a negative sized screen"));
 		}
 	}
 
@@ -349,14 +396,14 @@ public class JixelScreen extends Canvas {
 	 */
 	public void setSize(Dimension dimension) {
 		if (dimension == null) {
-			JixelGame.getConsole().printErr("Can not set screen dimension to null", new NullPointerException());
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set screen dimension to null"));
 		}
 		if (dimension.width > 0 && dimension.height > 0) {
 			this.width = dimension.width;
 			this.height = dimension.height;
 			resizeScreen(getWidth(), getHeight());
 		} else {
-			JixelGame.getConsole().printErr("Can not have a negative sized screen", new IllegalArgumentException());
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not have a negative sized screen"));
 		}
 	}
 
@@ -371,24 +418,10 @@ public class JixelScreen extends Canvas {
 			this.height = height;
 			resizeScreen(getWidth(), getHeight());
 		} else {
-			JixelGame.getConsole().printErr("Can not have a negative sized screen", new IllegalArgumentException());
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not have a negative sized screen"));
 		}
 	}
-
-	/**
-	 * @return the width of the current map
-	 */
-	public int getMapWidth() {
-		return camera.getMap().getWidth() << FIXSHIFT;
-	}
-
-	/**
-	 * @return the height of the current map
-	 */
-	public int getMapHeight() {
-		return camera.getMap().getHeight() << FIXSHIFT;
-	}
-
+	
 	/**
 	 * @return the current scale of the screen
 	 */
@@ -403,7 +436,7 @@ public class JixelScreen extends Canvas {
 		if (scale > 0) {
 			this.scale = scale;
 		} else {
-			JixelGame.getConsole().printErr("Can not set scale negative or equal to zero", new IllegalArgumentException());
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not set scale negative or equal to zero"));
 		}
 	}
 

@@ -11,6 +11,7 @@ public abstract class JixelCamera {
 	private int minX, maxX, minY, maxY;
 	private JixelMap map = new JixelMap();
 	private JixelEntity lockedEntity;
+	private JixelEntityManager entityManager = new JixelEntityManager();
 	
 	public JixelCamera(int minX, int minY, int maxX, int maxY){
 		this.minX = minX;
@@ -22,7 +23,9 @@ public abstract class JixelCamera {
 	public abstract void drawUnder(Graphics2D g);
 	public abstract void drawOver(Graphics2D g);
 	
-	public abstract JixelEntityManager getEntityManager();
+	public JixelEntityManager getEntityManager(){
+		return entityManager;
+	}
 
 	/**
 	 * @return the map

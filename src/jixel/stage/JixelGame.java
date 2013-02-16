@@ -2,8 +2,6 @@ package jixel.stage;
 
 import jixel.console.JixelConsole;
 import jixel.console.JixelVariableManager;
-import jixel.entity.JixelEntityManager;
-import jixel.gui.JixelCamera;
 import jixel.gui.JixelScreen;
 import jixel.input.JixelKeyInput;
 import jixel.input.JixelMouseInput;
@@ -17,10 +15,7 @@ public abstract class JixelGame implements Runnable {
 	private static JixelTimer timer;
 
 	private static JixelEditorScreen editorScreen;
-	private static JixelGameScreen gameScreen;
 	private static JixelScreen screen;
-
-	private static JixelEntityManager entities;
 
 	public static boolean playing = true;
 	public final String GAME_TITLE;
@@ -34,14 +29,10 @@ public abstract class JixelGame implements Runnable {
 		GAME_TITLE = title;
 
 		vm = new JixelVariableManager();
-		entities = new JixelEntityManager();
-		getVM().newVar("Jixel_lockedEntity", null);
-		getVM().newVar("Jixel_entityList", entities.getList());
 
 		editorScreen = new JixelEditorScreen(0, 0, width, height);
-		gameScreen = new JixelGameScreen(0, 0, width, height);
 
-		screen = new JixelScreen(title, gameScreen, width, height, scale, tileSizeLog2);
+		screen = new JixelScreen(title, width, height, scale, tileSizeLog2);
 		timer = new JixelTimer();
 		timer.setFPS(fps);
 
@@ -76,14 +67,7 @@ public abstract class JixelGame implements Runnable {
 	public static JixelScreen getScreen() {
 		return screen;
 	}
-
-	/**
-	 * @return the current camera for the screen
-	 */
-	public static JixelCamera getCamera() {
-		return getScreen().getCamera();
-	}
-
+	
 	/**
 	 * @return the console for the engine
 	 */
@@ -135,13 +119,6 @@ public abstract class JixelGame implements Runnable {
 	}
 
 	/**
-	 * @return the main entity manager for the engine
-	 */
-	public static JixelEntityManager getEntityManager() {
-		return entities;
-	}
-
-	/**
 	 * The abstract method to run user code every frame
 	 */
 	public abstract void update();
@@ -162,7 +139,7 @@ public abstract class JixelGame implements Runnable {
 					if (!getPaused()) {
 						getKeyInput().updateKeyboard();
 						update();
-						getCamera().getEntityManager().update();
+						getScreen().update();
 					}
 					getScreen().render();
 				}
