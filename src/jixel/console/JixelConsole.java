@@ -24,7 +24,24 @@ public class JixelConsole implements Runnable {
 		MAX_WIDTH = width - 3*tileSize;
 	}
 
+	/**
+	 * Prints an error to both the console and the standard error stream
+	 * @param message - The message to print
+	 * @param e - The error to throw
+	 */
+	public void printErr(String message, Exception e){
+		e.printStackTrace();
+		print(message);
+	}
+	
+	/**
+	 * Prints a message to the console
+	 * @param message - The message to print
+	 */
 	public void print(String message) {
+		if(message == null){
+			message = "null";
+		}
 		StringBuilder output = new StringBuilder();
 		String[] words = message.split(" ");
 		for(int i=0; i<words.length; i++){
@@ -44,6 +61,10 @@ public class JixelConsole implements Runnable {
 		}
 	}
 	
+	/**
+	 * Adds a message to the console logs
+	 * @param message - The message to add
+	 */
 	private void addToList(String message){
 		int size = messageList.size();
 		if (size - 1 == LOG_HEIGHT) {
@@ -52,10 +73,17 @@ public class JixelConsole implements Runnable {
 		messageList.add(0, message);
 	}
 
+	/**
+	 * @return - A list of the most recent console logs
+	 */
 	public List<String> getMessageList() {
 		return messageList;
 	}
 
+	/**
+	 * Parses the input of the user
+	 * @param input - The user input
+	 */
 	public void cInput(String[] input) {
 		String answer = "Unknown command.";
 
@@ -74,9 +102,7 @@ public class JixelConsole implements Runnable {
 					}else{
 						ans = JixelGame.getVM().runMethod(className, path[2], new Object());
 					}
-					if(ans == null){
-						answer = null;
-					}else{
+					if(ans != null){
 						answer = ans.toString();
 					}
 				}else{
@@ -135,16 +161,32 @@ public class JixelConsole implements Runnable {
 		return;
 	}
 
-	public String getConsoleMsg(){
+	/**
+	 * @return the message the user inputed
+	 */
+	private String getConsoleMsg(){
 		return JixelGame.getKeyInput().getConsoleMsg();
 	}
-	public void startConsoleMsg(int maxLength){
+	
+	/**
+	 * Starts listening for a message from the user
+	 * @param maxLength - Max length of the message
+	 */
+	private void startConsoleMsg(int maxLength){
 		JixelGame.getKeyInput().startConsoleMsg(maxLength);
 	}
+	
+	/**
+	 * @return whether or not the console is running
+	 */
 	public boolean isRunning() {
 		return isRunning;
 	}
 
+	/**
+	 * Sets whether or not the console is running
+	 * @param state - The new state of the console
+	 */
 	public void setState(boolean state) {
 		isRunning = state;
 		if(isRunning){
@@ -162,8 +204,7 @@ public class JixelConsole implements Runnable {
 					JixelGame.setPaused(false);
 					thread.wait();
 				} catch (InterruptedException e) {
-					print("Console thread interrupted");
-					e.printStackTrace();
+					printErr("Console thread interrupted", e);
 				}
 			}
 			while (isRunning) {

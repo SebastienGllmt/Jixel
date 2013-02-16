@@ -93,8 +93,7 @@ public class JixelSprite {
 			this.sheetPixels = new int [sheetWidth*sheetHeight];
 			img.getRGB(0, 0, sheetWidth, sheetHeight, sheetPixels, 0, sheetWidth);
 		} catch (IOException e) {
-			e.printStackTrace();
-			JixelGame.getConsole().print("Failed to load tile sheet at " + f.getPath());
+			JixelGame.getConsole().printErr("Failed to load tile sheet at " + f.getPath(), e);
 		}
 	}
 

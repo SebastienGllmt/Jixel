@@ -59,11 +59,9 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 				animMap.put(name, tiles);
 			}
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			JixelGame.getConsole().print("Could not find anim file at: " + f.getPath());
+			JixelGame.getConsole().printErr("Could not find anim file at: " + f.getPath(), e);
 		} catch (Exception e) {
-			e.printStackTrace();
-			JixelGame.getConsole().print("Failed to read anim file at: " + f.getPath());
+			JixelGame.getConsole().printErr("Failed to read anim file at: " + f.getPath(), e);
 		}
 	}
 
@@ -86,6 +84,10 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 		}
 	}
 
+	/**
+	 * Plays the animation with the given name for the entity
+	 * @param name - The name of the animation
+	 */
 	public void playAnim(String name) {
 		if (animMap.containsKey(name)) {
 			if (!name.equals(currentAnim)) {
@@ -93,7 +95,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 				currentAnim = name;
 			}
 		} else {
-			JixelGame.getConsole().print("No anim called " + name + " found in " + this.name);
+			JixelGame.getConsole().printErr("No anim called " + name + " found in " + this.name, new FileNotFoundException());
 		}
 	}
 
@@ -123,6 +125,9 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	 * @return whether or not they have the same name
 	 */
 	public boolean equalsByName(JixelEntity entity) {
+		if (entity == null) {
+			return false;
+		}
 		return entity.getName().equals(this.name);
 	}
 
@@ -152,35 +157,39 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	}
 
 	/**
-	 * @param name the name to set
+	 * @param the new name of the entity
 	 */
 	public void setName(String name) {
-		this.name = name;
+		if (name != null) {
+			this.name = name;
+		}else{
+			JixelGame.getConsole().printErr("Can not set entity name to null", new NullPointerException());
+		}
 	}
 
 	/**
-	 * @return the x
+	 * @return the x position
 	 */
 	public double getX() {
 		return x;
 	}
 
 	/**
-	 * @param x the x to set
+	 * @param the new x position of the entity
 	 */
 	public void setX(double x) {
 		this.x = x;
 	}
 
 	/**
-	 * @return the y
+	 * @return the y position
 	 */
 	public double getY() {
 		return y;
 	}
 
 	/**
-	 * @param y the y to set
+	 * @param the new y position of the entity
 	 */
 	public void setY(double y) {
 		this.y = y;
@@ -194,7 +203,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	}
 
 	/**
-	 * @param speed the speed to set
+	 * @param the new speed of the entity
 	 */
 	public void setSpeed(double speed) {
 		this.speed = speed;
@@ -205,7 +214,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	 * @return -1 if entity is lower, 0 if equal, 1 if higher
 	 */
 	public int compareTo(JixelEntity e) {
-		if (e.getY() + getHeight() > getY() + getHeight()) {
+		if (e.getY() + e.getHeight() > getY() + getHeight()) {
 			return -1;
 		} else if (e.getY() == getY()) {
 			return 0;

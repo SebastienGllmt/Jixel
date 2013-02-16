@@ -200,8 +200,7 @@ public abstract class JixelGame implements Runnable {
 		try {
 			thread.join();
 		} catch (InterruptedException e) {
-			e.printStackTrace();
-			JixelGame.getConsole().print("Failed to stop JixelGame thread");
+			JixelGame.getConsole().printErr("Failed to stop JixelGame thread", e);
 		}
 	}
 

@@ -64,11 +64,9 @@ public class JixelMap {
 			}
 			holdsLevel = true;
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			JixelGame.getConsole().print("Map not found at: " + f.getPath());
+			JixelGame.getConsole().printErr("Map not found at: " + f.getPath(), e);
 		} catch (Exception e){
-			e.printStackTrace();
-			JixelGame.getConsole().print("Failed to load tile sheet at " + f.getPath());
+			JixelGame.getConsole().printErr("Failed to load tile sheet at " + f.getPath(), e);
 		}
 	}
 	
