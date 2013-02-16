@@ -2,49 +2,49 @@ package jixel.gui;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
 import jixel.stage.JixelGame;
 
-
 public class JixelSprite {
 
 	private final String PATH;
 	private int width, height;
-	
+
 	private transient BufferedImage img;
 	private int sheetWidth, sheetHeight;
 	private int[] sheetPixels;
 	private int currentTile;
-	
-	private boolean flipH=false, flipV=false;
+
+	private boolean flipH = false, flipV = false;
 
 	/**
 	 * Constructor for JixelSprite
 	 * @param PATH - Location of the sprite sheet
 	 */
-	public JixelSprite(final String PATH){
+	public JixelSprite(final String PATH) {
 		this.PATH = PATH;
 		this.width = JixelGame.getScreen().getTileSize();
 		this.height = JixelGame.getScreen().getTileSize();
 		loadSheet();
 	}
-	
+
 	/**
 	 * Constructor for JixelSprite
 	 * @param PATH - Location of the sprite sheet
 	 * @param width - Width of a given sprite
 	 * @param height - Height of a given sprite
 	 */
-	public JixelSprite(final String PATH, int width, int height){
+	public JixelSprite(final String PATH, int width, int height) {
 		this.PATH = PATH;
 		this.width = width;
 		this.height = height;
 		loadSheet();
 	}
-	
+
 	/**
 	 * Returns the pixel for the given tile/coordinates
 	 * @param tileID - the ID of the tile in the file
@@ -52,19 +52,19 @@ public class JixelSprite {
 	 * @param yy - The y offset from the given tile's origin
 	 * @return the pixel at the given location
 	 */
-	public int getPixel(int tileID, int xx, int yy){
-		if(tileID == -1){
+	public int getPixel(int tileID, int xx, int yy) {
+		if (tileID == -1) {
 			return 0;
 		}
-		int tileX = tileID%(sheetWidth/width);
-		int tileY = tileID/(sheetWidth/width);
-		int index = (tileX*width + xx) + (tileY*height + yy)*sheetWidth;
-		if(index < 0 || index >= sheetPixels.length){
+		int tileX = tileID % (sheetWidth / width);
+		int tileY = tileID / (sheetWidth / width);
+		int index = (tileX * width + xx) + (tileY * height + yy) * sheetWidth;
+		if (index < 0 || index >= sheetPixels.length) {
 			return 0;
 		}
-		return sheetPixels[(tileX*width + xx) + (tileY*height + yy)*sheetWidth];
+		return sheetPixels[(tileX * width + xx) + (tileY * height + yy) * sheetWidth];
 	}
-	
+
 	/**
 	 * Returns the pixel for the given tile/coordinates
 	 * @param tileX - The x coordinate of the tile in the file
@@ -73,25 +73,27 @@ public class JixelSprite {
 	 * @param yy - The y offset from the given tile's origin
 	 * @return the pixel at the given location
 	 */
-	public int getPixel(int tileX, int tileY, int xx, int yy){
-		int index = (tileX*width + xx) + (tileY*height + yy)*sheetWidth;
-		if(index < 0 || index >= sheetPixels.length){
+	public int getPixel(int tileX, int tileY, int xx, int yy) {
+		int index = (tileX * width + xx) + (tileY * height + yy) * sheetWidth;
+		if (index < 0 || index >= sheetPixels.length) {
 			return 0;
 		}
-		return sheetPixels[(tileX*width + xx) + (tileY*height + yy)*sheetWidth];
+		return sheetPixels[(tileX * width + xx) + (tileY * height + yy) * sheetWidth];
 	}
-	
+
 	/**
 	 * Loads the tilesheet for the sprite
 	 */
-	protected void loadSheet(){
+	protected void loadSheet() {
 		File f = new File(PATH);
 		try {
 			img = ImageIO.read(f);
 			sheetWidth = img.getWidth();
 			sheetHeight = img.getHeight();
-			this.sheetPixels = new int [sheetWidth*sheetHeight];
+			this.sheetPixels = new int[sheetWidth * sheetHeight];
 			img.getRGB(0, 0, sheetWidth, sheetHeight, sheetPixels, 0, sheetWidth);
+		} catch (FileNotFoundException e) {
+			JixelGame.getConsole().printErr("Could not find sprite sheet at " + f.getPath(), e);
 		} catch (IOException e) {
 			JixelGame.getConsole().printErr("Failed to load tile sheet at " + f.getPath(), e);
 		}
@@ -100,23 +102,24 @@ public class JixelSprite {
 	/**
 	 * @return the image of the sprite
 	 */
-	public BufferedImage getImg(){
+	public BufferedImage getImg() {
 		return img;
 	}
+
 	/**
 	 * @return the width
 	 */
 	public int getWidth() {
 		return width;
 	}
-	
+
 	/**
 	 * @return the height
 	 */
 	public int getHeight() {
 		return height;
 	}
-	
+
 	/**
 	 * @return the currentTile
 	 */
@@ -125,35 +128,35 @@ public class JixelSprite {
 	}
 
 	/**
-	 * @param currentTile the currentTile to set
+	 * @param currentTile - The current tile the sprite is on
 	 */
 	public void setTileID(int tileID) {
 		this.currentTile = tileID;
 	}
-	
+
 	/**
-	 * @return the flipH
+	 * @return whether or not the sprite is flipped horizontally
 	 */
 	public boolean isFlipH() {
 		return flipH;
 	}
 
 	/**
-	 * @param flipH the flipH to set
+	 * @param flipH - Whether or not the sprite is flipped horizontally
 	 */
 	public void setFlipH(boolean state) {
 		this.flipH = state;
 	}
 
 	/**
-	 * @return the flipV
+	 * @return whether or not the sprite is flipped vertically
 	 */
 	public boolean isFlipV() {
 		return flipV;
 	}
 
 	/**
-	 * @param flipV the flipV to set
+	 * @param flipV - Whether or not the sprite is flipped veritcally
 	 */
 	public void setFlipV(boolean state) {
 		this.flipV = state;

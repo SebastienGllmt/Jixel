@@ -33,6 +33,14 @@ public class JixelConsole implements Runnable {
 		e.printStackTrace();
 		print(message);
 	}
+	/**
+	 * Prints an error to both the console and the standard error stream
+	 * @param e - The error to throw
+	 */
+	public void printErr(Exception e){
+		e.printStackTrace();
+		print(e.getMessage());
+	}
 	
 	/**
 	 * Prints a message to the console

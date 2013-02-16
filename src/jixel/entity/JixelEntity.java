@@ -95,7 +95,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 				currentAnim = name;
 			}
 		} else {
-			JixelGame.getConsole().printErr("No anim called " + name + " found in " + this.name, new FileNotFoundException());
+			JixelGame.getConsole().printErr(new FileNotFoundException("No anim called " + name + " found in " + this.name));
 		}
 	}
 
@@ -163,7 +163,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 		if (name != null) {
 			this.name = name;
 		}else{
-			JixelGame.getConsole().printErr("Can not set entity name to null", new NullPointerException());
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set entity name to null"));
 		}
 	}
 

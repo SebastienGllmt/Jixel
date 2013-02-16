@@ -14,7 +14,7 @@ public class JixelEntityManager {
 		if (entity != null) {
 			entityList.add(entity);
 		} else {
-			JixelGame.getConsole().printErr("Can not add null entity to Entity List", new NullPointerException());
+			JixelGame.getConsole().printErr(new NullPointerException("Can not add null entity to Entity List"));
 		}
 	}
 
@@ -37,7 +37,7 @@ public class JixelEntityManager {
 		if (newList != null) {
 			entityList = newList;
 		} else {
-			JixelGame.getConsole().printErr("Can not set Entity List to null", new NullPointerException());
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set Entity List to null"));
 		}
 	}
 

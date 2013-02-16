@@ -67,7 +67,7 @@ public final class JixelVariableManager {
 	 */
 	public synchronized void newClass(Object o, Class<?> clazz) {
 		if (o == null || clazz == null) {
-			JixelGame.getConsole().printErr("Classes and instances in console must be non-null", new NullPointerException());
+			JixelGame.getConsole().printErr(new NullPointerException("Classes and instances in console must be non-null"));
 		}
 		String className = clazz.getName();
 		if (objectMap.containsKey(className)) {
@@ -112,7 +112,7 @@ public final class JixelVariableManager {
 	public synchronized <T> T runMethod(String className, String methodName, Object... args) {
 		Object o = objectMap.get(className);
 		if (o == null) {
-			JixelGame.getConsole().printErr("No class: " + className + " found", new ClassNotFoundException());
+			JixelGame.getConsole().printErr(new ClassNotFoundException("No class: " + className + " found"));
 		}
 		try {
 			Method method = classMap.get(o).get(methodName);
@@ -134,11 +134,11 @@ public final class JixelVariableManager {
 					return (T) method.invoke(o, args);
 				}
 			}
-			JixelGame.getConsole().printErr("Wrong number of arguments for " + methodName + " in " + className, new IllegalArgumentException());
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Wrong number of arguments for " + methodName + " in " + className));
 		} catch (IllegalArgumentException e) {
-			JixelGame.getConsole().printErr("Illegal arguments for " + methodName + " in " + className, new IllegalArgumentException());
+			JixelGame.getConsole().printErr("Illegal arguments for " + methodName + " in " + className, e);
 		} catch (IllegalAccessException e) {
-			JixelGame.getConsole().printErr("Illegal access to " + methodName + " in " + className, new IllegalArgumentException());
+			JixelGame.getConsole().printErr("Illegal access to " + methodName + " in " + className, e);
 		} catch (InvocationTargetException e) {
 			JixelGame.getConsole().printErr("The method " + methodName + " in " + className + " threw " + e.getCause().toString(), e);
 		}
@@ -313,7 +313,7 @@ public final class JixelVariableManager {
 		}
 		File f = new File(SAV_DIR + "\\" + file);
 		if (!f.exists()) {
-			JixelGame.getConsole().printErr("Failed to create file:" + f.getPath(), new FileNotFoundException());
+			JixelGame.getConsole().printErr(new FileNotFoundException("Failed to create file:" + f.getPath()));
 			return false;
 		}
 		try (InputStream in = new FileInputStream(f); ObjectInputStream ois = new ObjectInputStream(in)) {
@@ -343,7 +343,7 @@ public final class JixelVariableManager {
 		if (stateManager != null) {
 			this.stateManager = stateManager;
 		} else {
-			JixelGame.getConsole().printErr("Can not set stateManager to null", new NullPointerException());
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set stateManager to null"));
 		}
 	}
 }
