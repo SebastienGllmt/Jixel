@@ -14,7 +14,6 @@ public abstract class JixelGame implements Runnable {
 	private static JixelMouseInput mouseInput;
 	private static JixelTimer timer;
 
-	private static JixelEditorScreen editorScreen;
 	private static JixelScreen screen;
 
 	public static boolean playing = true;
@@ -25,14 +24,12 @@ public abstract class JixelGame implements Runnable {
 
 	private static Thread thread; // thread for the update/render
 
-	public JixelGame(String title, int width, int height, int scale, int tileSizeLog2, int fps) {
+	public JixelGame(String title, int width, int height, int tileSizeLog2, int fps) {
 		GAME_TITLE = title;
 
 		vm = new JixelVariableManager();
 
-		editorScreen = new JixelEditorScreen(0, 0, width, height);
-
-		screen = new JixelScreen(title, width, height, scale, tileSizeLog2);
+		screen = new JixelScreen(title, width, height, tileSizeLog2);
 		timer = new JixelTimer();
 		timer.setFPS(fps);
 
@@ -41,8 +38,8 @@ public abstract class JixelGame implements Runnable {
 		keyInput = new JixelKeyInput();
 		mouseInput = new JixelMouseInput();
 
-		getScreen().addKeyListener(keyInput);
-		getScreen().addMouseListener(mouseInput);
+		getScreen().canvas.addKeyListener(keyInput);
+		getScreen().canvas.addMouseListener(mouseInput);
 
 		//Adds a user-specified shutdown hook for the game
 		Runtime.getRuntime().addShutdownHook(new Thread() {

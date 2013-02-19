@@ -20,22 +20,24 @@ import javax.swing.SwingUtilities;
 import jixel.entity.JixelEntity;
 import jixel.stage.JixelGame;
 
-@SuppressWarnings("serial")
-public class JixelScreen extends Canvas {
+public class JixelScreen {
 
-	private int width, height, scale, tileSize;
-	private final int FIXSHIFT;
-	private List<JixelCamera> cameraList = new ArrayList<JixelCamera>();
+	private int width, height, tileSize, backgroundColor;
+	public final int FIXSHIFT;
+	private List<JixelCamera> cameraList = Collections.synchronizedList(new ArrayList<JixelCamera>());
 	private int[] pixels;
 	private JFrame frame;
-	private int mouseX, mouseY;
-	private int backgroundColor = 0;
+	public int mouseX, mouseY;
+	private double scaleX = 1, scaleY = 1;
+	public double rotate = 0, translateX = 0, translateY = 0;
+	public Canvas canvas = new Canvas();
+	public Graphics2D g;
 
 	private BufferStrategy bs;
 	private BufferedImage image;
 
-	public JixelScreen(String title, int width, int height, int scale, int tileSizeLog2) {
-		if (width < 0 || height < 0 || scale < 0 || tileSizeLog2 < 0) {
+	public JixelScreen(String title, int width, int height, int tileSizeLog2) {
+		if (width < 0 || height < 0 || tileSizeLog2 < 0) {
 			FIXSHIFT = 0;
 			JixelGame.getConsole().printErr(new IllegalArgumentException("Invalid arguments for JixelScreen"));
 			System.exit(1);
@@ -47,24 +49,25 @@ public class JixelScreen extends Canvas {
 			JixelGame.getVM().newVar("Jixel_xOffset", 0);
 			JixelGame.getVM().newVar("Jixel_yOffset", 0);
 
-			Dimension size = new Dimension(width * scale, height * scale);
-			setPreferredSize(size);
+			Dimension size = new Dimension(width, height);
+			canvas.setPreferredSize(size);
+			setBackground(0);
 
 			frame = new JFrame();
 			frame.setResizable(false);
 			frame.setTitle(title);
-			frame.add(this);
+			frame.add(canvas);
 			frame.pack();
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setLocationRelativeTo(null);
 			frame.setVisible(true);
 
-			createBufferStrategy(3);
-			bs = getBufferStrategy();
+			canvas.createBufferStrategy(3);
+			bs = canvas.getBufferStrategy();
 			image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 			pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 
-			requestFocus();
+			canvas.requestFocus();
 		}
 	}
 
@@ -76,9 +79,9 @@ public class JixelScreen extends Canvas {
 	private synchronized void resizeScreen(int width, int height) {
 		if (width > 0 && height > 0) {
 			synchronized (JixelGame.getUpdateLock()) {
-				Dimension size = new Dimension(width * scale, height * scale);
-				setPreferredSize(size);
-				frame.setSize(getWidth(), getHeight());
+				Dimension size = new Dimension((int) (width * scaleX), (int) (height * scaleY));
+				canvas.setPreferredSize(size);
+				frame.pack();
 				frame.setLocationRelativeTo(null);
 				image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
 				pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
@@ -160,7 +163,7 @@ public class JixelScreen extends Canvas {
 	 * @param color - The new color
 	 */
 	public void setBackground(int color) {
-		this.backgroundColor = color;
+		setBackground(new Color(color));
 	}
 
 	/**
@@ -170,6 +173,7 @@ public class JixelScreen extends Canvas {
 	public void setBackground(Color c) {
 		if (c != null) {
 			this.backgroundColor = c.getRGB();
+			canvas.setBackground(c);
 		} else {
 			JixelGame.getConsole().printErr(new NullPointerException("Can not set background color to null"));
 		}
@@ -208,6 +212,7 @@ public class JixelScreen extends Canvas {
 						int xx = entity.isFlipH() ? entity.getWidth() - x - 1 : x; //whether or not to flip horizontally
 						int yy = entity.isFlipV() ? entity.getHeight() - y - 1 : y; //whether or not to flip vertically
 						entityPixels[x + y * entity.getWidth()] = entity.getPixel(entity.getTileID(), xx, yy);
+						;
 					}
 				}
 			}
@@ -287,7 +292,7 @@ public class JixelScreen extends Canvas {
 	 */
 	private void updateMouse(JixelCamera camera) {
 		Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-		SwingUtilities.convertPointFromScreen(mousePoint, this);
+		SwingUtilities.convertPointFromScreen(mousePoint, canvas);
 		mouseX = (int) mousePoint.getX() + camera.getCameraX() % 32;
 		if (mouseX < 0) {
 			mouseX = 0;
@@ -309,24 +314,21 @@ public class JixelScreen extends Canvas {
 		clear();
 
 		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
-		g.setFont(this.getFont());
+		g.scale(scaleX, scaleY);
+		g.rotate(rotate);
+		g.translate(translateX, translateY);
 
 		for (JixelCamera camera : cameraList) {
 			updateMouse(camera);
 			updateCamera(camera);
 			if (camera.getMap().canLoad()) {
-				if (camera.getMinY() < 0 || camera.getMinX() < 0) {
-					JixelGame.getConsole().printErr(new ArrayIndexOutOfBoundsException("Camera can not have a negative view"));
-				}
-				if (camera.getMaxY() > getHeight() || camera.getMaxX() > getWidth()) {
-					JixelGame.getConsole().printErr(new ArrayIndexOutOfBoundsException("Camera can not have a greater view than the screen"));
-				}
 				for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
 					int yy = y + camera.getCameraY();
 					for (int x = camera.getMinX(); x < camera.getMaxX(); x++) {
 						int xx = x + camera.getCameraX();
 						int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
 						pixels[x + y * width] = camera.getMap().getSpriteSheet().getPixel(tileID, xx & 31, yy & 31);
+						;
 					}
 				}
 			}
@@ -420,24 +422,6 @@ public class JixelScreen extends Canvas {
 	}
 
 	/**
-	 * @return the current scale of the screen
-	 */
-	public int getScale() {
-		return scale;
-	}
-
-	/**
-	 * @param
-	 */
-	public void setScale(int scale) {
-		if (scale > 0) {
-			this.scale = scale;
-		} else {
-			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not set scale negative or equal to zero"));
-		}
-	}
-
-	/**
 	 * @return the tile size
 	 */
 	public int getTileSize() {
@@ -445,10 +429,39 @@ public class JixelScreen extends Canvas {
 	}
 
 	/**
-	 * @return the bitwise shift equivalent to the tile size
+	 * @return the current x scale of the game
 	 */
-	public int getFixshift() {
-		return FIXSHIFT;
+	public double getScaleX() {
+		return scaleX;
+	}
+
+	/**
+	 * @return the current y scale of the game
+	 */
+	public double getScaleY() {
+		return scaleY;
+	}
+
+	/**
+	 * Sets a new scale for the graphics
+	 * @param scale
+	 */
+	public void setScale(double scaleX, double scaleY) {
+		if (scaleX > 0 && scaleY > 0) {
+			this.scaleX = scaleX;
+			this.scaleY = scaleY;
+			resizeScreen(getWidth(), getHeight());
+		} else {
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not have a negative scale"));
+		}
+	}
+
+	public void setScaleX(double scaleX) {
+		setScale(scaleX, getScaleY());
+	}
+
+	public void setScaleY(double scaleY) {
+		setScale(getScaleX(), scaleY);
 	}
 
 	/**
