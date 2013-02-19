@@ -21,6 +21,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	private String name;
 	private double x, y;
 	private double speed;
+	public boolean wasUpdated=false;
 
 	private String currentAnim = null;
 	private int animIndex = 1, fps = 0, frameCount = 0;
@@ -135,12 +136,13 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	 * Applies the update if game isn't paused
 	 */
 	public void applyActions() {
-		if (!JixelGame.getPaused()) {
+		if (!JixelGame.getPaused() && !wasUpdated) {
 			if (currentAnim != null && fps > 0) {
 				frameCount++;
 				updateAnim();
 			}
 			update();
+			wasUpdated = true;
 		}
 	}
 
@@ -162,7 +164,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	public void setName(String name) {
 		if (name != null) {
 			this.name = name;
-		}else{
+		} else {
 			JixelGame.getConsole().printErr(new NullPointerException("Can not set entity name to null"));
 		}
 	}
@@ -211,16 +213,23 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Compares an entity by Y axis position
-	 * @return -1 if entity is lower, 0 if equal, 1 if higher
+	 * @return -1 if entity is lower, sorts by x if equal, 1 if higher
 	 */
 	public int compareTo(JixelEntity e) {
+		if(e==null){
+			return -1;
+		}
 		if (e.getY() + e.getHeight() > getY() + getHeight()) {
 			return -1;
 		} else if (e.getY() == getY()) {
-			return 0;
-		} else {
+			if (e.getX() > getX()) {
+				return -1;
+			} else if (e.getX() == getX()) {
+				return 0;
+			}
 			return 1;
 		}
+		return 1;
 	}
 
 }
