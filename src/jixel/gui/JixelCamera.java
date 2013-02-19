@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 
 import jixel.entity.JixelEntity;
 import jixel.entity.JixelEntityManager;
+import jixel.stage.JixelGame;
 
 public abstract class JixelCamera {
 	
@@ -15,10 +16,10 @@ public abstract class JixelCamera {
 	private JixelEntityManager entityManager = new JixelEntityManager();
 	
 	public JixelCamera(int minX, int minY, int maxX, int maxY){
-		this.minX = minX;
-		this.maxX = maxX;
-		this.minY = minY;
-		this.maxY = maxY;
+		setMinX(minX);
+		setMinY(minY);
+		setMaxX(maxX);
+		setMaxY(maxY);
 	}
 	
 	/**
@@ -109,6 +110,10 @@ public abstract class JixelCamera {
 	 * @param minX the minX to set
 	 */
 	public void setMinX(int minX) {
+		if(minX < 0){
+			minX = 0;
+			JixelGame.getConsole().printErr(new ArrayIndexOutOfBoundsException("Camera can not have a negative view"));
+		}
 		this.minX = minX;
 	}
 
@@ -123,6 +128,11 @@ public abstract class JixelCamera {
 	 * @param maxX the maxX to set
 	 */
 	public void setMaxX(int maxX) {
+		int maxWidth = JixelGame.getScreen().getWidth();
+		if(maxX > maxWidth){
+			maxX = maxWidth;
+			JixelGame.getConsole().printErr(new ArrayIndexOutOfBoundsException("Camera can not have a greater view than the screen"));
+		}
 		this.maxX = maxX;
 	}
 
@@ -137,6 +147,10 @@ public abstract class JixelCamera {
 	 * @param minY the minY to set
 	 */
 	public void setMinY(int minY) {
+		if(minY < 0){
+			minY = 0;
+			JixelGame.getConsole().printErr(new ArrayIndexOutOfBoundsException("Camera can not have a negative view"));
+		}
 		this.minY = minY;
 	}
 
@@ -151,6 +165,11 @@ public abstract class JixelCamera {
 	 * @param maxY the maxY to set
 	 */
 	public void setMaxY(int maxY) {
+		int maxHeight = JixelGame.getScreen().getHeight();
+		if(maxY > maxHeight){
+			maxY = maxHeight;
+			JixelGame.getConsole().printErr(new ArrayIndexOutOfBoundsException("Camera can not have a greater view than the screen"));
+		}
 		this.maxY = maxY;
 	}
 	
