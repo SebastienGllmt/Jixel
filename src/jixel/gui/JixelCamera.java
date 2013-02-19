@@ -9,6 +9,7 @@ import jixel.entity.JixelEntityManager;
 public abstract class JixelCamera {
 	
 	private int minX, maxX, minY, maxY;
+	private int cameraX, cameraY;
 	private JixelMap map = new JixelMap();
 	private JixelEntity lockedEntity;
 	private JixelEntityManager entityManager = new JixelEntityManager();
@@ -20,11 +21,53 @@ public abstract class JixelCamera {
 		this.maxY = maxY;
 	}
 	
+	/**
+	 * @return the camera x position
+	 */
+	public int getCameraX() {
+		return cameraX;
+	}
+
+	/**
+	 * @param cameraX - Set the camera x position
+	 */
+	public void setCameraX(int cameraX) {
+		this.cameraX = cameraX;
+	}
+
+	/**
+	 * @return the camera y position
+	 */
+	public int getCameraY() {
+		return cameraY;
+	}
+
+	/**
+	 * @param cameraY - Set the camera y position
+	 */
+	public void setCameraY(int cameraY) {
+		this.cameraY = cameraY;
+	}
+
+	/**
+	 * Draw under entities
+	 * @param g - Graphic object to draw it in
+	 */
 	public abstract void drawUnder(Graphics2D g);
+	/**
+	 * Draw over entities
+	 * @param g - Graphic object to draw it in
+	 */
 	public abstract void drawOver(Graphics2D g);
 	
+	/**
+	 * @return the entity manager for the camera
+	 */
 	public JixelEntityManager getEntityManager(){
 		return entityManager;
+	}
+	public void setEntityManager(JixelEntityManager jem){
+		this.entityManager = jem;
 	}
 
 	/**

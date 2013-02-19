@@ -11,6 +11,7 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -27,7 +28,6 @@ public class JixelScreen extends Canvas {
 	private List<JixelCamera> cameraList = new ArrayList<JixelCamera>();
 	private int[] pixels;
 	private JFrame frame;
-	private int screenX, screenY;
 	private int mouseX, mouseY;
 	private int backgroundColor = 0;
 
@@ -89,10 +89,10 @@ public class JixelScreen extends Canvas {
 	}
 
 	/**
-	 * Attaches a new camera to the screen
+	 * Add a new camera to the screen
 	 * @param camera - The new camera
 	 */
-	public void attachCamera(JixelCamera camera) {
+	public void addCamera(JixelCamera camera) {
 		synchronized (JixelGame.getUpdateLock()) {
 			if (camera != null) {
 				cameraList.add(camera);
@@ -105,49 +105,44 @@ public class JixelScreen extends Canvas {
 	/**
 	 * Removes the first instance of a given camera from the camera list
 	 * @param camera - The camera to remove
+	 * @return whether or not the element was removed
 	 */
-	public void removeCamera(JixelCamera camera) {
+	public boolean removeCamera(JixelCamera camera) {
 		synchronized (JixelGame.getUpdateLock()) {
 			if (camera != null) {
-				cameraList.remove(camera);
+				return cameraList.remove(camera);
 			}
+			return false;
 		}
 	}
 
 	/**
 	 * Empties the camera list
 	 */
-	public void resetCameraList() {
+	public void clearCameraList() {
 		synchronized (JixelGame.getUpdateLock()) {
-			cameraList = new ArrayList<JixelCamera>();
-		}
-	}
-
-	/**
-	 * Adds all cameras from one list to the current one
-	 * @param cameraList - The list of cameras to add
-	 */
-	public void addAllCamera(List<JixelCamera> cameraList) {
-		synchronized (JixelGame.getUpdateLock()) {
-			this.cameraList.addAll(cameraList);
+			cameraList.clear();
 		}
 	}
 
 	/**
 	 * @return the list of cameras for the screen
 	 */
-	public List<JixelCamera> getCameraList() {
+	public List<JixelCamera> getUnmodifiableCameraList() {
 		synchronized (JixelGame.getUpdateLock()) {
-			return this.cameraList;
+			return Collections.unmodifiableList(cameraList);
 		}
 	}
-	
+
 	/**
 	 * Updates all the cameras
 	 */
-	public void update(){
-		synchronized(JixelGame.getUpdateLock()){
-			for(JixelCamera camera : cameraList){
+	public void update() {
+		synchronized (JixelGame.getUpdateLock()) {
+			for (JixelCamera camera : cameraList) {
+				camera.getEntityManager().resetUpdate();
+			}
+			for (JixelCamera camera : cameraList) {
 				camera.getEntityManager().update();
 			}
 		}
@@ -197,19 +192,19 @@ public class JixelScreen extends Canvas {
 	private void drawEntity(JixelCamera camera, Graphics2D g, JixelEntity entity) {
 		int entityX = (int) entity.getX();
 		int entityY = (int) entity.getY();
-		if (entityX > camera.getMaxX() + screenX || entityX + entity.getWidth() < screenX + camera.getMinX()) {
+		if (entityX > camera.getMaxX() + camera.getCameraX() || entityX + entity.getWidth() < camera.getCameraX() + camera.getMinX()) {
 			return;
 		}
-		if (entityY > camera.getMaxY() + screenY || entityY + entity.getHeight() < screenY + camera.getMinY()) {
+		if (entityY > camera.getMaxY() + camera.getCameraY() || entityY + entity.getHeight() < camera.getCameraY() + camera.getMinY()) {
 			return;
 		}
 		BufferedImage img = new BufferedImage(entity.getWidth(), entity.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		int[] entityPixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
 
 		for (int y = 0; y < entity.getHeight(); y++) {
-			if (entityY + y > screenY + camera.getMinY() - 1 && entityY + y < screenY + camera.getMaxY()) {
+			if (entityY + y > camera.getCameraY() + camera.getMinY() - 1 && entityY + y < camera.getCameraY() + camera.getMaxY()) {
 				for (int x = 0; x < entity.getWidth(); x++) {
-					if (entityX + x > screenX + camera.getMinX() - 1 && entityX + x < screenX + camera.getMaxX()) {
+					if (entityX + x > camera.getCameraX() + camera.getMinX() - 1 && entityX + x < camera.getCameraX() + camera.getMaxX()) {
 						int xx = entity.isFlipH() ? entity.getWidth() - x - 1 : x; //whether or not to flip horizontally
 						int yy = entity.isFlipV() ? entity.getHeight() - y - 1 : y; //whether or not to flip vertically
 						entityPixels[x + y * entity.getWidth()] = entity.getPixel(entity.getTileID(), xx, yy);
@@ -217,7 +212,7 @@ public class JixelScreen extends Canvas {
 				}
 			}
 		}
-		g.drawImage(img, entityX - screenX, entityY - screenY, entity.getWidth(), entity.getHeight(), null);
+		g.drawImage(img, entityX - camera.getCameraX(), entityY - camera.getCameraY(), entity.getWidth(), entity.getHeight(), null);
 	}
 
 	/**
@@ -228,7 +223,7 @@ public class JixelScreen extends Canvas {
 
 		/** Draw entities **/
 		camera.getEntityManager().sort();
-		List<JixelEntity> entityList = camera.getEntityManager().getList();
+		List<JixelEntity> entityList = camera.getEntityManager().getUnmodifiableList();
 		for (int i = 0; i < entityList.size(); i++) {
 			drawEntity(camera, g, entityList.get(i));
 		}
@@ -254,25 +249,25 @@ public class JixelScreen extends Canvas {
 
 	/**
 	 * Adjusts the screen's offset
-	 * @param xOffset
-	 * @param yOffset
+	 * @param xOffset - The new offset for the x axis
+	 * @param yOffset - The new offset for the y axis
 	 */
 	public void adjustScreen(JixelCamera camera, int xOffset, int yOffset) {
-		if (xOffset < 0) {
-			xOffset = 0;
+		if (xOffset < -camera.getMinX()) {
+			xOffset = -camera.getMinX();
 		}
-		if (yOffset < 0) {
-			yOffset = 0;
+		if (yOffset < -camera.getMinY()) {
+			yOffset = -camera.getMinY();
 		}
-		if (xOffset > (camera.getMap().getWidth()<<FIXSHIFT) - getWidth()) {
-			xOffset = (camera.getMap().getWidth()<<FIXSHIFT) - getWidth();
+		if (xOffset > (camera.getMap().getWidth() << FIXSHIFT) - camera.getMaxX()) {
+			xOffset = (camera.getMap().getWidth() << FIXSHIFT) - camera.getMaxX();
 		}
-		if (yOffset > (camera.getMap().getHeight()<<FIXSHIFT) - getHeight()) {
-			yOffset = (camera.getMap().getHeight()<<FIXSHIFT) - getHeight();
+		if (yOffset > (camera.getMap().getHeight() << FIXSHIFT) - camera.getMaxY()) {
+			yOffset = (camera.getMap().getHeight() << FIXSHIFT) - camera.getMaxY();
 		}
-		screenX = xOffset;
+		camera.setCameraX(xOffset);
 		JixelGame.getVM().setValue("Jixel_xOffset", xOffset);
-		screenY = yOffset;
+		camera.setCameraY(yOffset);
 		JixelGame.getVM().setValue("Jixel_yOffset", yOffset);
 	}
 
@@ -281,8 +276,8 @@ public class JixelScreen extends Canvas {
 	 */
 	private synchronized void updateCamera(JixelCamera camera) {
 		if (camera.getLockedEntity() != null) {
-			int x = (int) camera.getLockedEntity().getX() - (width >> 1);
-			int y = (int) camera.getLockedEntity().getY() - (height >> 1);
+			int x = (int) camera.getLockedEntity().getX() - (camera.getWidth() >> 1) - camera.getMinX();
+			int y = (int) camera.getLockedEntity().getY() - (camera.getHeight() >> 1) - camera.getMinY();
 			adjustScreen(camera, x, y);
 		}
 	}
@@ -290,16 +285,16 @@ public class JixelScreen extends Canvas {
 	/**
 	 * Updates mouse position on the screen
 	 */
-	private void updateMouse() {
+	private void updateMouse(JixelCamera camera) {
 		Point mousePoint = MouseInfo.getPointerInfo().getLocation();
 		SwingUtilities.convertPointFromScreen(mousePoint, this);
-		mouseX = (int) mousePoint.getX() + screenX % 32;
+		mouseX = (int) mousePoint.getX() + camera.getCameraX() % 32;
 		if (mouseX < 0) {
 			mouseX = 0;
 		} else if (mouseX > width) {
 			mouseX = width;
 		}
-		mouseY = (int) mousePoint.getY() + screenY % 32;
+		mouseY = (int) mousePoint.getY() + camera.getCameraY() % 32;
 		if (mouseY < 0) {
 			mouseY = 0;
 		} else if (mouseY > width) {
@@ -312,12 +307,12 @@ public class JixelScreen extends Canvas {
 	 */
 	public synchronized void render() {
 		clear();
-		updateMouse();
-		
+
 		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
 		g.setFont(this.getFont());
-		
+
 		for (JixelCamera camera : cameraList) {
+			updateMouse(camera);
 			updateCamera(camera);
 			if (camera.getMap().canLoad()) {
 				if (camera.getMinY() < 0 || camera.getMinX() < 0) {
@@ -327,19 +322,21 @@ public class JixelScreen extends Canvas {
 					JixelGame.getConsole().printErr(new ArrayIndexOutOfBoundsException("Camera can not have a greater view than the screen"));
 				}
 				for (int y = camera.getMinY(); y < camera.getMaxY(); y++) {
-					int yy = y + screenY;
+					int yy = y + camera.getCameraY();
 					for (int x = camera.getMinX(); x < camera.getMaxX(); x++) {
-						int xx = x + screenX;
+						int xx = x + camera.getCameraX();
 						int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
 						pixels[x + y * width] = camera.getMap().getSpriteSheet().getPixel(tileID, xx & 31, yy & 31);
 					}
 				}
 			}
-		}		
+		}
 		g.drawImage(image, 0, 0, width, height, null);
-		
-		for(JixelCamera camera : cameraList){
-			drawSprites(camera, g);
+
+		for (JixelCamera camera : cameraList) {
+			if (camera.getEntityManager() != null) {
+				drawSprites(camera, g);
+			}
 		}
 		g.dispose();
 		bs.show();
@@ -421,7 +418,7 @@ public class JixelScreen extends Canvas {
 			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not have a negative sized screen"));
 		}
 	}
-	
+
 	/**
 	 * @return the current scale of the screen
 	 */
