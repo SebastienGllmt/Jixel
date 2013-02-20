@@ -150,11 +150,15 @@ public class JixelConsole implements Runnable {
 					answer = "Editor exited";
 				}
 			}
-		} else if (input.length == 3) {
+		} else if (input.length >= 3) {
 			if(input[0].equals("set")){
 				if (JixelGame.getVM().containsVar(input[1])) {
-					if(JixelGame.getVM().setValue(input[1], input[2])){
-						answer = "Value of " + input[1] + " set to " + input[2];
+					String newValue = "";
+					for(int i=2; i<input.length; i++){
+						newValue += " " + input[i];
+					}
+					if(JixelGame.getVM().setValue(input[1], newValue)){
+						answer = "Value of " + input[1] + " set to " + newValue;
 					}else{
 						answer = null;
 					}

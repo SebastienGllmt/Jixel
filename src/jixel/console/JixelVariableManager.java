@@ -50,14 +50,19 @@ public final class JixelVariableManager {
 	 * Adds a new variable to the VM
 	 * @param name - The name of the variable
 	 * @param value - The initial value of the variable
+	 * @return whether or not the new value was added
 	 */
-	public synchronized <T> void newVar(String name, T value) {
+	public synchronized <T> boolean newVar(String name, T value) {
 		if (varMap.containsKey(name)) {
-			JixelGame.getConsole().print("A variable with the name " + name + " exists.");
-			return;
+			JixelGame.getConsole().printErr(new IllegalArgumentException("A variable with the name " + name + " exists."));
+			return false;
 		}
-
+		if(name.contains(" ")){
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Invalid name " + name + ". variable names can not contain spaces"));
+				return false;
+		}
 		varMap.put(name, value);
+		return true;
 	}
 
 	/**
@@ -65,14 +70,15 @@ public final class JixelVariableManager {
 	 * @param o - The instance to run methods on
 	 * @param clazz - The class to add
 	 */
-	public synchronized void newClass(Object o, Class<?> clazz) {
+	public synchronized boolean newClass(Object o, Class<?> clazz) {
 		if (o == null || clazz == null) {
 			JixelGame.getConsole().printErr(new NullPointerException("Classes and instances in console must be non-null"));
+			return false;
 		}
 		String className = clazz.getName();
 		if (objectMap.containsKey(className)) {
 			JixelGame.getConsole().print("The class " + className + " is already visible to the console");
-			return;
+			return false;
 		}
 		objectMap.put(className, o);
 		HashMap<String, Method> classData = new HashMap<String, Method>();
@@ -85,12 +91,13 @@ public final class JixelVariableManager {
 					name = i.getName() + j;
 					j++;
 				}
-				JixelGame.getConsole().print("Duplicate method name " + i.getName() + " detected and was renamed to " + name);
+				JixelGame.getConsole().print("Duplicate method name " + i.getName() + " detected and was renamed to " + name + " in " + clazz.toString());
 			}
 			classData.put(name, i);
 		}
-
+		
 		classMap.put(o, classData);
+		return true;
 	}
 
 	/**
@@ -117,7 +124,7 @@ public final class JixelVariableManager {
 		try {
 			Method method = classMap.get(o).get(methodName);
 			if (method == null) {
-				JixelGame.getConsole().printErr("No method " + methodName + " found", new NoSuchMethodException());
+				JixelGame.getConsole().printErr(new NoSuchMethodException("No method " + methodName + " found"));
 				return null;
 			}
 			Type[] parameters = method.getParameterTypes();
@@ -128,10 +135,20 @@ public final class JixelVariableManager {
 				}
 			} else {
 				if (paraAmount == args.length) {
+					boolean conversionError = false;
 					for (int i = 0; i < args.length; i++) {
-						args[i] = convertValue((Class<?>) parameters[i], (String) args[i]);
+						Object[] conversion = convertValue(methodName, (Class<?>) parameters[i], (String) args[i]);
+						if (!(boolean) conversion[0]) {
+							conversionError = true;
+							break;
+						}
+						args[i] = conversion[1];
 					}
-					return (T) method.invoke(o, args);
+					if (!conversionError) {
+						return (T) method.invoke(o, args);
+					} else {
+						return null;
+					}
 				}
 			}
 			JixelGame.getConsole().printErr(new IllegalArgumentException("Wrong number of arguments for " + methodName + " in " + className));
@@ -166,30 +183,37 @@ public final class JixelVariableManager {
 	 * @param value - The string representation of the value
 	 * @return the wrapper of the corresponding primitive type
 	 */
-	private synchronized Object convertValue(Class<?> clazz, String value) {
+	private synchronized Object[] convertValue(String name, Class<?> clazz, String value) {
+		Object[] returnValue = new Object[2];
+		returnValue[0] = new Boolean(true);
+		if (value.equals("null")) {
+			returnValue[1] = null;
+			return returnValue;
+		}
 		if (clazz.equals(String.class)) {
-			return value;
-		}
-		if (clazz.equals(Byte.class)) {
-			return Byte.parseByte(value);
+			returnValue[1] = value;
+		}else if (clazz.equals(Byte.class)) {
+			returnValue[1] = Byte.parseByte(value);
 		} else if (clazz.equals(Short.class)) {
-			return Short.parseShort(value);
+			returnValue[1] = Short.parseShort(value);
 		} else if (clazz.equals(Integer.class)) {
-			return Integer.parseInt(value);
+			returnValue[1] = Integer.parseInt(value);
 		} else if (clazz.equals(Long.class)) {
-			return Long.parseLong(value);
+			returnValue[1] = Long.parseLong(value);
 		} else if (clazz.equals(Float.class)) {
-			return Float.parseFloat(value);
+			returnValue[1] = Float.parseFloat(value);
 		} else if (clazz.equals(Double.class)) {
-			return Double.parseDouble(value);
+			returnValue[1] = Double.parseDouble(value);
 		} else if (clazz.equals(Boolean.class)) {
-			return Boolean.parseBoolean(value);
+			returnValue[1] = Boolean.parseBoolean(value);
 		} else if (clazz.equals(Character.class)) {
-			return value.charAt(0);
+			returnValue[1] = value.charAt(0);
 		} else {
-			JixelGame.getConsole().print("Incompatible conversion from String to " + clazz.getClass().toString());
-			return null;
+			JixelGame.getConsole().print("Incompatible conversion from String to " + clazz.toString() + " at " + name);
+			returnValue[0] = new Boolean(false);
+			returnValue[1] = null;
 		}
+		return returnValue;
 	}
 
 	/**
@@ -201,10 +225,14 @@ public final class JixelVariableManager {
 	public synchronized boolean setValue(String name, String value) {
 		Class<?> clazz = JixelGame.getVM().getValue(name).getClass();
 		try {
-			varMap.put(name, convertValue(clazz, value));
+			Object[] conversion = convertValue(name, clazz, value);
+			if (!(boolean) conversion[0]) {
+				return false;
+			}
+			varMap.put(name, conversion[1]);
 			return true;
 		} catch (NumberFormatException e) {
-			JixelGame.getConsole().print("Incompatible conversion from " + value + " to " + clazz.getName());
+			JixelGame.getConsole().print("Incompatible conversion from " + value + " to " + clazz.getName() + " at " + name);
 			return false;
 		}
 	}
