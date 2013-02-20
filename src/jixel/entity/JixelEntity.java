@@ -232,4 +232,9 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 		return 1;
 	}
 
+	@Override
+	public String toString() {
+		return "JixelEntity [name=" + name + ", x=" + x + ", y=" + y + "]";
+	}
+
 }
