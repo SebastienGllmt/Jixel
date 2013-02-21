@@ -65,7 +65,7 @@ public class JixelScreen {
 
 			canvas.createBufferStrategy(3);
 			bs = canvas.getBufferStrategy();
-			
+
 			setBackground(0);
 			canvas.requestFocus();
 		}
@@ -77,7 +77,7 @@ public class JixelScreen {
 	 * @param height - The new height of the screen
 	 * @return whether or not the screen was resized
 	 */
-	private synchronized boolean resizeScreen(int width, int height) {
+	private boolean resizeScreen(int width, int height) {
 		if (width > 0 && height > 0) {
 			synchronized (JixelGame.getUpdateLock()) {
 				Dimension size = new Dimension((int) (width * scaleX), (int) (height * scaleY));
@@ -178,7 +178,7 @@ public class JixelScreen {
 			JixelGame.getConsole().printErr(new NullPointerException("Can not set background color to null"));
 		}
 	}
-	
+
 	/**
 	 * The main method to draw entities
 	 * @param g - Graphics object for the screen
@@ -213,7 +213,7 @@ public class JixelScreen {
 	/**
 	 * Main method to draw entities
 	 */
-	private synchronized void drawSprites(JixelCamera camera, Graphics2D g) {
+	private void drawSprites(JixelCamera camera, Graphics2D g) {
 		camera.drawUnder(g); //draw under entities what the camera wants
 
 		/** Draw entities **/
@@ -225,8 +225,8 @@ public class JixelScreen {
 
 		camera.drawOver(g); //draw over entities what the camera wants
 	}
-	
-	private synchronized void drawConsole(Graphics2D g){
+
+	private void drawConsole(Graphics2D g) {
 		if (JixelGame.getConsole().isRunning()) {
 			g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) .5));
 			g.setColor(Color.BLACK);
@@ -270,7 +270,7 @@ public class JixelScreen {
 	/**
 	 * Updates the screen's location based off the current locked entity
 	 */
-	private synchronized void updateCamera(JixelCamera camera) {
+	private void updateCamera(JixelCamera camera) {
 		if (camera.getLockedEntity() != null) {
 			int x = (int) camera.getLockedEntity().getX() - (camera.getWidth() >> 1) - camera.getMinX();
 			int y = (int) camera.getLockedEntity().getY() - (camera.getHeight() >> 1) - camera.getMinY();
@@ -301,36 +301,38 @@ public class JixelScreen {
 	/**
 	 * Main render method for the screen
 	 */
-	public synchronized void render() {
-		Graphics2D g = (Graphics2D) bs.getDrawGraphics();
-		g.scale(scaleX, scaleY);
-		g.rotate(rotate);
-		g.translate(translateX, translateY);
-		g.setColor(canvas.getBackground());
-		g.fillRect(0, 0, width, height);
-		
-		for (JixelCamera camera : cameraList) {
-			updateMouse(camera);
-			updateCamera(camera);
-			if (camera.getMap().canLoad()) {
-				BufferedImage camImg = new BufferedImage(camera.getWidth(), camera.getHeight(), BufferedImage.TYPE_INT_ARGB);
-				int[] camPixels = ((DataBufferInt) camImg.getRaster().getDataBuffer()).getData();
-				for (int y = 0; y < camera.getHeight(); y++) {
-					int yy = y + camera.getCameraY() + camera.getMinY();
-					for (int x = 0; x < camera.getWidth(); x++) {
-						int xx = x + camera.getCameraX() + camera.getMinX();
-						int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
-						camPixels[x + y * camera.getWidth()] = camera.getMap().getSpriteSheet().getPixel(tileID, xx & 31, yy & 31);
+	public void render() {
+		synchronized (JixelGame.getUpdateLock()) {
+			Graphics2D g = (Graphics2D) bs.getDrawGraphics();
+			g.scale(scaleX, scaleY);
+			g.rotate(rotate);
+			g.translate(translateX, translateY);
+			g.setColor(canvas.getBackground());
+			g.fillRect(0, 0, width, height);
+
+			for (JixelCamera camera : cameraList) {
+				updateMouse(camera);
+				updateCamera(camera);
+				if (camera.getMap().canLoad()) {
+					BufferedImage camImg = new BufferedImage(camera.getWidth(), camera.getHeight(), BufferedImage.TYPE_INT_ARGB);
+					int[] camPixels = ((DataBufferInt) camImg.getRaster().getDataBuffer()).getData();
+					for (int y = 0; y < camera.getHeight(); y++) {
+						int yy = y + camera.getCameraY() + camera.getMinY();
+						for (int x = 0; x < camera.getWidth(); x++) {
+							int xx = x + camera.getCameraX() + camera.getMinX();
+							int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
+							camPixels[x + y * camera.getWidth()] = camera.getMap().getSpriteSheet().getPixel(tileID, xx & 31, yy & 31);
+						}
 					}
+					g.drawImage(camImg, camera.getMinX(), camera.getMinY(), camera.getWidth(), camera.getHeight(), null);
 				}
-				g.drawImage(camImg, camera.getMinX(), camera.getMinY(), camera.getWidth(), camera.getHeight(), null);
+				drawSprites(camera, g);
 			}
-			drawSprites(camera, g);
+			drawConsole(g);
+
+			g.dispose();
+			bs.show();
 		}
-		drawConsole(g);
-		
-		g.dispose();
-		bs.show();
 	}
 
 	/**
@@ -462,20 +464,20 @@ public class JixelScreen {
 	public boolean setScaleY(double scaleY) {
 		return setScale(getScaleX(), scaleY);
 	}
-	
+
 	/**
 	 * Sets the cursor for the engine
 	 * @param path - The path for the cursor
-	 * @param hotSpot - The point in the image 
+	 * @param hotSpot - The point in the image
 	 * @return
 	 */
-	public boolean setCursor(String path, Point hotSpot){
-		if(path == null || hotSpot == null){
+	public boolean setCursor(String path, Point hotSpot) {
+		if (path == null || hotSpot == null) {
 			JixelGame.getConsole().printErr(new NullPointerException("Can not have a negative scale"));
 			return false;
 		}
 		File f = new File(path);
-		if(!f.exists()){
+		if (!f.exists()) {
 			JixelGame.getConsole().printErr(new FileNotFoundException("No file found at " + f.getPath()));
 			return false;
 		}
