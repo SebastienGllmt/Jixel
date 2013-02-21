@@ -1,6 +1,8 @@
 package jixel.gui;
 
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,6 +20,7 @@ public class JixelSprite {
 	private int sheetWidth, sheetHeight;
 	private int[] sheetPixels;
 	private int currentTile;
+	protected double x, y;
 
 	private boolean flipH = false, flipV = false;
 
@@ -100,6 +103,37 @@ public class JixelSprite {
 	}
 
 	/**
+	 * The main method to draw sprites
+	 * @param g - Graphics object for the screen
+	 * @param camera - The camera to draw it in
+	 */
+	public void getDrawn(Graphics2D g, JixelCamera camera) {
+		int spriteX = (int) getX();
+		int spriteY = (int) getY();
+		if (spriteX > camera.getMaxX() + camera.getCameraX() || spriteX + getWidth() < camera.getCameraX() + camera.getMinX()) {
+			return;
+		}
+		if (spriteY > camera.getMaxY() + camera.getCameraY() || spriteY + getHeight() < camera.getCameraY() + camera.getMinY()) {
+			return;
+		}
+		BufferedImage img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+		int[] entityPixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
+
+		for (int y = 0; y < getHeight(); y++) {
+			if (spriteY + y > camera.getCameraY() + camera.getMinY() - 1 && spriteY + y < camera.getCameraY() + camera.getMaxY()) {
+				for (int x = 0; x < getWidth(); x++) {
+					if (spriteX + x > camera.getCameraX() + camera.getMinX() - 1 && spriteX + x < camera.getCameraX() + camera.getMaxX()) {
+						int xx = isFlipH() ? getWidth() - x - 1 : x; //whether or not to flip horizontally
+						int yy = isFlipV() ? getHeight() - y - 1 : y; //whether or not to flip vertically
+						entityPixels[x + y * getWidth()] = getPixel(getTileID(), xx, yy);
+					}
+				}
+			}
+		}
+		g.drawImage(img, spriteX - camera.getCameraX(), spriteY - camera.getCameraY(), getWidth(), getHeight(), null);
+	}
+
+	/**
 	 * @return the image of the sprite
 	 */
 	public BufferedImage getImg() {
@@ -160,5 +194,38 @@ public class JixelSprite {
 	 */
 	public void setFlipV(boolean state) {
 		this.flipV = state;
+	}
+
+	/**
+	 * @return the x position
+	 */
+	public double getX() {
+		return x;
+	}
+
+	/**
+	 * @param the new x position of the entity
+	 */
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	/**
+	 * @return the y position
+	 */
+	public double getY() {
+		return y;
+	}
+
+	/**
+	 * @param the new y position of the entity
+	 */
+	public void setY(double y) {
+		this.y = y;
+	}
+
+	@Override
+	public String toString() {
+		return "JixelSprite [PATH=" + PATH + ", width=" + width + ", height=" + height + ", x=" + x + ", y=" + y + "]";
 	}
 }

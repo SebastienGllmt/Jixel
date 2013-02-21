@@ -180,37 +180,6 @@ public class JixelScreen {
 	}
 
 	/**
-	 * The main method to draw entities
-	 * @param g - Graphics object for the screen
-	 * @param entity - Entity to draw
-	 */
-	private void drawEntity(JixelCamera camera, Graphics2D g, JixelEntity entity) {
-		int entityX = (int) entity.getX();
-		int entityY = (int) entity.getY();
-		if (entityX > camera.getMaxX() + camera.getCameraX() || entityX + entity.getWidth() < camera.getCameraX() + camera.getMinX()) {
-			return;
-		}
-		if (entityY > camera.getMaxY() + camera.getCameraY() || entityY + entity.getHeight() < camera.getCameraY() + camera.getMinY()) {
-			return;
-		}
-		BufferedImage img = new BufferedImage(entity.getWidth(), entity.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		int[] entityPixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
-
-		for (int y = 0; y < entity.getHeight(); y++) {
-			if (entityY + y > camera.getCameraY() + camera.getMinY() - 1 && entityY + y < camera.getCameraY() + camera.getMaxY()) {
-				for (int x = 0; x < entity.getWidth(); x++) {
-					if (entityX + x > camera.getCameraX() + camera.getMinX() - 1 && entityX + x < camera.getCameraX() + camera.getMaxX()) {
-						int xx = entity.isFlipH() ? entity.getWidth() - x - 1 : x; //whether or not to flip horizontally
-						int yy = entity.isFlipV() ? entity.getHeight() - y - 1 : y; //whether or not to flip vertically
-						entityPixels[x + y * entity.getWidth()] = entity.getPixel(entity.getTileID(), xx, yy);
-					}
-				}
-			}
-		}
-		g.drawImage(img, entityX - camera.getCameraX(), entityY - camera.getCameraY(), entity.getWidth(), entity.getHeight(), null);
-	}
-
-	/**
 	 * Main method to draw entities
 	 */
 	private void drawSprites(JixelCamera camera, Graphics2D g) {
@@ -218,11 +187,12 @@ public class JixelScreen {
 
 		/** Draw entities **/
 		camera.getEntityManager().sort();
+		
 		List<JixelEntity> entityList = camera.getEntityManager().getUnmodifiableList();
-		for (int i = 0; i < entityList.size(); i++) {
-			drawEntity(camera, g, entityList.get(i));
+		for (JixelEntity e : entityList) {
+			e.getDrawn(g, camera);
 		}
-
+		
 		camera.drawOver(g); //draw over entities what the camera wants
 	}
 

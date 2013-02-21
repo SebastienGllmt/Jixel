@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +18,8 @@ import jixel.stage.JixelGame;
 public abstract class JixelEntity extends JixelSprite implements Comparable<JixelEntity>, Serializable {
 
 	private String name;
-	private double x, y;
 	private double speed;
-	public boolean wasUpdated=false;
+	public boolean wasUpdated = false;
 
 	private String currentAnim = null;
 	private int animIndex = 1, fps = 0, frameCount = 0;
@@ -170,34 +168,6 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	}
 
 	/**
-	 * @return the x position
-	 */
-	public double getX() {
-		return x;
-	}
-
-	/**
-	 * @param the new x position of the entity
-	 */
-	public void setX(double x) {
-		this.x = x;
-	}
-
-	/**
-	 * @return the y position
-	 */
-	public double getY() {
-		return y;
-	}
-
-	/**
-	 * @param the new y position of the entity
-	 */
-	public void setY(double y) {
-		this.y = y;
-	}
-
-	/**
 	 * @return the speed
 	 */
 	public double getSpeed() {
@@ -216,7 +186,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	 * @return -1 if entity is lower, sorts by x if equal, 1 if higher
 	 */
 	public int compareTo(JixelEntity e) {
-		if(e==null){
+		if (e == null) {
 			return -1;
 		}
 		if (e.getY() + e.getHeight() > getY() + getHeight()) {
@@ -234,7 +204,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	@Override
 	public String toString() {
-		return "JixelEntity [name=" + name + ", x=" + x + ", y=" + y + "]";
+		return "JixelEntity [name=" + name + ", x=" + x + ", y=" + y + ", tileID=" + getTileID() + "]";
 	}
 
 }
