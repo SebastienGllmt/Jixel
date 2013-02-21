@@ -10,7 +10,8 @@ import jixel.stage.JixelGame;
 class JixelKey {
 
 	public boolean isHeld = false;
-	public boolean newState = true;
+	public boolean newHeldState = true;
+	public boolean newReleasedState = false;
 }
 
 public class JixelKeyInput implements KeyListener {
@@ -38,8 +39,12 @@ public class JixelKeyInput implements KeyListener {
 	 */
 	public void addKey(String name, int keyCode) {
 		if (name != null) {
-			nameMap.put(name, keyCode);
-			keyMap.put(keyCode, new JixelKey());
+			if (keyCode > 0) {
+				nameMap.put(name, keyCode);
+				keyMap.put(keyCode, new JixelKey());
+			}else{
+				JixelGame.getConsole().printErr(new IllegalArgumentException("Can not have a negative key code for " + name));
+			}
 		} else {
 			JixelGame.getConsole().printErr(new NullPointerException("Can not have null name for key"));
 		}
@@ -69,48 +74,78 @@ public class JixelKeyInput implements KeyListener {
 	 * @param name - The lookup name of the key
 	 * @return whether or not the key is down
 	 */
-	public synchronized boolean isKeyDown(String name) {
-		if (name != null) {
-			if (nameMap.containsKey(name)) {
-				int keyCode = nameMap.get(name);
-				if (keyMap.containsKey(keyCode)) {
-					JixelKey key = keyMap.get(keyCode);
-					if(key.isHeld){
-						key.newState = false;
-						return true;
-					}
-				}
+	public synchronized boolean isDown(String name) {
+		int keyCode = contains(name);
+		if (keyCode != -1) {
+			JixelKey key = keyMap.get(keyCode);
+			if (key.isHeld) {
+				key.newHeldState = false;
+				return true;
 			}
 		}
 		return false;
 	}
+
 	/**
-	 * Returns whether or not a given key is toggled
-	 * 		i.e. this will only be true once if the user keeps the key held
+	 * Returns whether or not a given key is down but will only be true once if key is held
 	 * @param name - The lookup name of the key
-	 * @return whether or not the key is toggled
+	 * @return whether or not the key is is down but only once
 	 */
-	public synchronized boolean isKeyToggled(String name) {
+	public synchronized boolean isDownOnce(String name) {
+		int keyCode = contains(name);
+		if (keyCode != -1) {
+			JixelKey key = keyMap.get(keyCode);
+			if (key.isHeld) {
+				boolean returnValue = key.newHeldState;
+				key.newHeldState = false;
+				return returnValue;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns whether or not a given key is up but will only be true once if key is not held
+	 * @param name - The lookup name of the key
+	 * @return whether or not the key is is up but only once
+	 */
+	public synchronized boolean isUpOnce(String name) {
+		int keyCode = contains(name);
+		if (keyCode != -1) {
+			JixelKey key = keyMap.get(keyCode);
+			if (!key.isHeld) {
+				boolean returnValue = key.newReleasedState;
+				key.newReleasedState = false;
+				return returnValue;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns whether or not the map contains a given key
+	 * 		Returns -1 if it is not contained
+	 * 		Returns its key code if it is contained
+	 * @param name - The lookup name of the key
+	 * @return the key code or -1
+	 */
+	public synchronized int contains(String name) {
 		if (name != null) {
 			if (nameMap.containsKey(name)) {
 				int keyCode = nameMap.get(name);
 				if (keyMap.containsKey(keyCode)) {
-					JixelKey key = keyMap.get(keyCode);
-					if(key.isHeld){
-						boolean returnValue = key.newState;
-						key.newState = false;
-						return returnValue;
-					}
+					return keyCode;
 				}
 			}
 		}
-		return false;
+		return -1;
 	}
 
 	@Override
 	public synchronized void keyPressed(KeyEvent evt) {
 		if (keyMap.containsKey(evt.getKeyCode())) {
 			keyMap.get(evt.getKeyCode()).isHeld = true;
+			keyMap.get(evt.getKeyCode()).newReleasedState = true;
 			if ((int) nameMap.get("Jixel_consoleKey") == evt.getKeyCode()) {
 				JixelGame.getConsole().setState(!JixelGame.getConsole().isRunning());
 			}
@@ -121,7 +156,7 @@ public class JixelKeyInput implements KeyListener {
 	public synchronized void keyReleased(KeyEvent evt) {
 		if (keyMap.containsKey(evt.getKeyCode())) {
 			keyMap.get(evt.getKeyCode()).isHeld = false;
-			keyMap.get(evt.getKeyCode()).newState = true;
+			keyMap.get(evt.getKeyCode()).newHeldState = true;
 		}
 	}
 
