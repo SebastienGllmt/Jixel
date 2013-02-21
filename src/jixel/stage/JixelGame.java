@@ -134,7 +134,6 @@ public abstract class JixelGame implements Runnable {
 				getTimer().updateTime();
 				if (getTimer().timeForFrame()) {
 					if (!getPaused()) {
-						getKeyInput().updateKeyboard();
 						update();
 						getScreen().update();
 					}

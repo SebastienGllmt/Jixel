@@ -106,7 +106,7 @@ public class JixelEntityManager {
 
 	/**
 	 * Returns how many entities with a given name are in the list
-	 * @param name
+	 * @param name - Name of entity to look for
 	 * @return how many entities with the name are in the list
 	 */
 	public synchronized int countOccurences(String name) {
