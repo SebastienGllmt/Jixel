@@ -2,6 +2,7 @@ package jixel.entity;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import jixel.stage.JixelGame;
@@ -205,7 +206,7 @@ public class JixelEntityManager {
 	 * @return how many entities had their names replaced
 	 */
 	public synchronized int renameAll(String name, String newName) {
-		int count=0;
+		int count = 0;
 		for (int i = 0; i < entityList.size(); i++) {
 			if (entityList.get(i).getName().equals(name)) {
 				entityList.get(i).setName(newName);
@@ -245,6 +246,9 @@ public class JixelEntityManager {
 	}
 
 	/**
+	 * Returns an unmodifiable version of the underlying list
+	 * 		Note: Use of this list must be synchronized with the list as a lock. 
+	 * 			Failure to do so will result in a ConcurrentModificationException or undetermined behavior.
 	 * @return an unmodifiable version of the list
 	 */
 	public synchronized List<JixelEntity> getUnmodifiableList() {
@@ -256,7 +260,42 @@ public class JixelEntityManager {
 	 */
 	public synchronized void update() {
 		for (JixelEntity entity : entityList) {
+			if (entity instanceof JixelCollidable) {
+				checkCollisions(entity);
+			}
 			entity.applyActions();
+		}
+	}
+
+	private void checkCollisions(JixelEntity entity) {
+		List<JixelEntity> collisions = new ArrayList<JixelEntity>();
+		JixelCollidable collidableEntity = ((JixelCollidable) entity);
+
+		for (JixelEntity e : entityList) {
+			if (e.intersects(entity)) {
+				if (e != entity) {
+					collisions.add(e);
+				}
+			}
+		}
+		List<JixelEntity> eCollisionList = entity.getCollisionList();
+
+		synchronized (eCollisionList) {
+			Iterator<JixelEntity> i = eCollisionList.iterator();
+			while (i.hasNext()) {
+				JixelEntity e = i.next();
+				if (!collisions.contains(e)) {
+					collidableEntity.onSeparation(e);
+					i.remove();
+				}
+			}
+			for (JixelEntity e : collisions) {
+				collidableEntity.isColliding(e);
+				if (!eCollisionList.contains(e)) {
+					collidableEntity.onHit(e);
+					eCollisionList.add(e);
+				}
+			}
 		}
 	}
 

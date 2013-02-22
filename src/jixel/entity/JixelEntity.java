@@ -1,8 +1,11 @@
 package jixel.entity;
 
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +22,10 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	public boolean wasUpdated = false;
 	private int originX, originY;
 
+	private Rectangle hitBox;
+	public boolean hitBoxLocked = false;
+	private List<JixelEntity> collisionList = Collections.synchronizedList(new ArrayList<JixelEntity>());
+
 	private String currentAnim = null;
 	private int animIndex, fps, frameCount;
 	private Map<String, List<Integer>> animMap = new HashMap<String, List<Integer>>();
@@ -27,6 +34,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 		super(imgPath, width, height, x, y);
 		this.animPath = animPath;
 		this.name = name;
+		hitBox = new Rectangle(x, y, width, height);
 		originX = width >> 1;
 		originY = height >> 1;
 		if (animPath != null) {
@@ -269,6 +277,64 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	public void setOrigin(int originX, int originY) {
 		this.originX = originX;
 		this.originY = originY;
+	}
+
+	/**
+	 * @return the entity's hit box
+	 */
+	public Rectangle getHitBox() {
+		return hitBox;
+	}
+
+	/**
+	 * Checks if the entity's underlying hit box intersects an entity
+	 * @param e - The entity to compare
+	 * @return whether or not they intersect
+	 */
+	public boolean intersects(JixelEntity e) {
+		if (e != null) {
+			return hitBox.intersects(e.getHitBox());
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Checks if the entity's underlying hit box intersects a shape
+	 * @param s - The shape to compare
+	 * @return whether or not they intersect
+	 */
+	public boolean intersects(Shape s) {
+		if (s != null) {
+			return s.intersects(hitBox);
+		}
+		return false;
+	}
+
+	@Override
+	public void setX(double x) {
+		super.setX(x);
+		if (!hitBoxLocked) {
+			hitBox.setLocation((int) x, (int) getY());
+		}
+	}
+
+	@Override
+	public void setY(double y) {
+		super.setY(y);
+		if (!hitBoxLocked) {
+			hitBox.setLocation((int) getX(), (int) y);
+		}
+	}
+	
+	/**
+	 * Returns a list containing all the entities this entity is colliding with at this moment.
+	 * 		Note: Use of this list must be synchronized with the list as a lock. 
+	 * 			Failure to do so will result in a ConcurrentModificationException or undetermined behavior.
+	 * @return the underlying collision list
+	 */
+	public List<JixelEntity> getCollisionList(){
+		return collisionList;
 	}
 
 	@Override
