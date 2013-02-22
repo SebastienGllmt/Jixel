@@ -17,27 +17,27 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	private String name, animPath;
 	private double speed;
 	public boolean wasUpdated = false;
+	private int originX, originY;
 
 	private String currentAnim = null;
 	private int animIndex, fps, frameCount;
 	private Map<String, List<Integer>> animMap = new HashMap<String, List<Integer>>();
 
-	public JixelEntity(String imgPath, String animPath, String name, int width, int height, int tileX, int tileY, double speed) {
-		super(imgPath, width, height);
+	public JixelEntity(String imgPath, String animPath, String name, int width, int height, int x, int y, double speed) {
+		super(imgPath, width, height, x, y);
 		this.animPath = animPath;
 		this.name = name;
-		int tileSize = JixelGame.getScreen().getTileSize();
-		setX(tileX * tileSize);
-		setY(tileY * tileSize);
+		originX = width >> 1;
+		originY = height >> 1;
 		if (animPath != null) {
 			loadAnimFile(animPath);
 		}
 	}
 
 	public synchronized void changeSprite(JixelEntity e) {
-		if(e != null){
+		if (e != null) {
 			changeSprite(e.getPath(), e.getAnimPath(), getWidth(), getHeight());
-		}else{
+		} else {
 			JixelGame.getConsole().printErr(new NullPointerException("Can not change sprite to null entity at " + name));
 		}
 	}
@@ -54,7 +54,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 		setTileID(0);
 		if (animPath != null) {
 			loadAnimFile(animPath);
-		}else{
+		} else {
 			animMap = null;
 			currentAnim = null;
 		}
@@ -117,7 +117,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	 * @param name - The name of the animation
 	 */
 	public synchronized void playAnim(String name) {
-		if(currentAnim == null){
+		if (currentAnim == null) {
 			JixelGame.getConsole().printErr(new NullPointerException("Can not play animation if no anim file exists at " + this.name));
 			return;
 		}
@@ -204,11 +204,11 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	public void setSpeed(double speed) {
 		this.speed = speed;
 	}
-	
+
 	/**
 	 * @return the underlying path for the entity's anim file
 	 */
-	public String getAnimPath(){
+	public String getAnimPath() {
 		return animPath;
 	}
 
@@ -220,10 +220,10 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 		if (e == null) {
 			return -1;
 		}
-		if (e.getY() + e.getHeight() > getY() + getHeight()) {
+		if (e.getY() + e.getOriginY() > getY() + getOriginY()) {
 			return -1;
 		} else if (e.getY() == getY()) {
-			if (e.getX() > getX()) {
+			if (e.getX() + e.getOriginX() > getX() + getOriginX()) {
 				return -1;
 			} else if (e.getX() == getX()) {
 				return 0;
@@ -231,6 +231,44 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 			return 1;
 		}
 		return 1;
+	}
+
+	/**
+	 * @return the origin for the x axis
+	 */
+	public int getOriginX() {
+		return originX;
+	}
+
+	/**
+	 * @param sets a new origin for the x axis
+	 */
+	public void setOriginX(int originX) {
+		this.originX = originX;
+	}
+
+	/**
+	 * @return the origin for the y axis
+	 */
+	public int getOriginY() {
+		return originY;
+	}
+
+	/**
+	 * @param sets a new origin for the y axis
+	 */
+	public void setOriginY(int originY) {
+		this.originY = originY;
+	}
+
+	/**
+	 * Sets a new origin for the entity
+	 * @param originX - The new origin for the x axis
+	 * @param originY - The new origin for the y axis
+	 */
+	public void setOrigin(int originX, int originY) {
+		this.originX = originX;
+		this.originY = originY;
 	}
 
 	@Override

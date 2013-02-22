@@ -13,7 +13,7 @@ import javax.imageio.ImageIO;
 
 import jixel.stage.JixelGame;
 
-public class JixelSprite implements Serializable{
+public class JixelSprite implements Serializable {
 
 	private String path;
 	private int width, height;
@@ -32,18 +32,30 @@ public class JixelSprite implements Serializable{
 	 * @param width - Width of a given sprite
 	 * @param height - Height of a given sprite
 	 */
-	public JixelSprite(String path) {
-		int tileSize = JixelGame.getScreen().getTileSize();
-		loadSheet(path, tileSize, tileSize);
+	public JixelSprite(String path, int width, int height) {
+		this(path, width, height, 0, 0);
 	}
-	
+
 	/**
 	 * Constructor for JixelSprite
 	 * @param path - Location of the sprite sheet
+	 * @param x - The x position of the sprite
+	 * @param y - The y position of the sprite
 	 * @param width - Width of a given sprite
 	 * @param height - Height of a given sprite
 	 */
-	public JixelSprite(String path, int width, int height) {
+	public JixelSprite(String path, int width, int height, int x, int y) {
+		this.x = x;
+		this.y = y;
+		if (width < 1 || height < 1) {
+			if (width < 1) {
+				width = 1;
+			}
+			if (height < 1) {
+				height = 1;
+			}
+			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not set width or height smaller than one at " + path));
+		}
 		loadSheet(path, width, height);
 	}
 
@@ -103,7 +115,7 @@ public class JixelSprite implements Serializable{
 			JixelGame.getConsole().printErr("Failed to load tile sheet at " + f.getPath(), e);
 		}
 	}
-	
+
 	/**
 	 * Rereading image after loading from serialization
 	 * @param in
@@ -236,11 +248,11 @@ public class JixelSprite implements Serializable{
 	public void setY(double y) {
 		this.y = y;
 	}
-	
+
 	/**
 	 * @return the path to the underlying sprite sheet
 	 */
-	public String getPath(){
+	public String getPath() {
 		return path;
 	}
 
