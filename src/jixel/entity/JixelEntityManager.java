@@ -25,7 +25,7 @@ public class JixelEntityManager {
 	}
 
 	/**
-	 * Remove a given entity from the entity list
+	 * Remove the first occurrence of a given entity from the entity list
 	 * @param entity - The entity to remove
 	 * @return whether or not the entity was found/removed
 	 */
@@ -34,6 +34,185 @@ public class JixelEntityManager {
 			return false;
 		}
 		return entityList.remove(entity);
+	}
+
+	/**
+	 * Removes the entity at the given index
+	 * @param index - The index of the entity
+	 * @return the entity that was just removed. Will return null if not found
+	 */
+	public synchronized JixelEntity remove(int index) {
+		if (index > 0 && index < entityList.size()) {
+			return entityList.remove(index);
+		} else {
+			JixelGame.getConsole().printErr(new IndexOutOfBoundsException("Index " + index + " is out of bounds"));
+			return null;
+		}
+	}
+
+	/**
+	 * Removes all of a given entity from the underlying list
+	 * @param entity - The entity to look for
+	 * @return how many of that entity was found
+	 */
+	public synchronized int removeAll(JixelEntity entity) {
+		int count = 0;
+		for (int i = 0; i < entityList.size(); i++) {
+			if (entityList.get(i).equals(entity)) {
+				entityList.remove(i--);
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Removes all of a given entity from the underlying list by name
+	 * @param name - The name of the entity to look for
+	 * @return how many of that entity was found
+	 */
+	public synchronized int removeAllByName(String name) {
+		int count = 0;
+		for (int i = 0; i < entityList.size(); i++) {
+			if (entityList.get(i).getName() == null && name == null) {
+				entityList.remove(i--);
+				count++;
+			} else if (entityList.get(i).getName().equals(name)) {
+				entityList.remove(i--);
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Remove the first occurrence of an entity with a given name
+	 * @param name - The name of the entity to look for
+	 * @return the entity that was just removed from the list. Will return null if not found
+	 */
+	public synchronized JixelEntity removeByName(String name) {
+		return remove(indexOfByName(name));
+	}
+
+	/**
+	 * Set an entity at a given index to a new entity
+	 * @param index - The index of the entity
+	 * @param entity - The new entity
+	 * @return the entity was was removed. Will return null if not found or on invalid index
+	 */
+	public synchronized JixelEntity set(int index, JixelEntity entity) {
+		if (entity == null) {
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set an entity to null"));
+			return null;
+		}
+		if (index > 0 && index < entityList.size()) {
+			return entityList.set(index, entity);
+		} else {
+			JixelGame.getConsole().printErr(new IndexOutOfBoundsException("Index " + index + " is out of bounds"));
+			return null;
+		}
+	}
+
+	/**
+	 * Replace the first occurrence of a given entity to a new entity
+	 * @param oldEntity - The entity to replace
+	 * @param newEntity - The entity to replace it with
+	 * @return the index of the replaced entity. Will return -1 if old entity is not found
+	 */
+	public synchronized int replace(JixelEntity oldEntity, JixelEntity newEntity) {
+		if (oldEntity == null || newEntity == null) {
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set entity to or from null"));
+			return -1;
+		}
+		int index = indexOf(oldEntity);
+		if (index != -1) {
+			entityList.set(index, newEntity);
+			return index;
+		} else {
+			return -1;
+		}
+	}
+
+	/**
+	 * Replace all of a given entity with a new entity
+	 * @param oldEntity - The old entity to replace
+	 * @param newEntity - The entity to replace with
+	 * @return the number of entities repalced. Will return -1 if no old entity is found
+	 */
+	public synchronized int replaceAll(JixelEntity oldEntity, JixelEntity newEntity) {
+		if (oldEntity == null || newEntity == null) {
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set entity to or from null"));
+			return -1;
+		}
+		int count = 0;
+		for (int i = 0; i < entityList.size(); i++) {
+			if (entityList.get(i).equals(newEntity)) {
+				count++;
+				entityList.set(i, newEntity);
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Sets the first occurrence of an entity with the given name to a new entity
+	 * @param name - The name to look for
+	 * @param entity - The entity to replace it with
+	 * @return the index of the replaced entity. Will return -1 if old entity is not found
+	 */
+	public synchronized int replaceByName(String name, JixelEntity entity) {
+		if (entity == null) {
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set entity to null"));
+			return -1;
+		}
+		int index = indexOfByName(name);
+		if (index != -1) {
+			entityList.set(index, entity);
+			return index;
+		} else {
+			return -1;
+		}
+	}
+
+	/**
+	 * Replaces all entities with a given name by another entity
+	 * @param name - The name to look for
+	 * @param entity - The entity to replace it with
+	 * @return the amount of entities replaced
+	 */
+	public synchronized int replaceAllByName(String name, JixelEntity entity) {
+		if (entity == null) {
+			JixelGame.getConsole().printErr(new NullPointerException("Can not set entity to null"));
+			return -1;
+		}
+		int count = 0;
+		for (int i = 0; i < entityList.size(); i++) {
+			if (name == null && entity.getName() == null) {
+				count++;
+				entityList.set(i, entity);
+			} else if (name.equals(entity.getName())) {
+				count++;
+				entityList.set(i, entity);
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Renames all entities with a given name
+	 * @param name - The name to replace
+	 * @param newName - The new name
+	 * @return how many entities had their names replaced
+	 */
+	public synchronized int renameAll(String name, String newName) {
+		int count=0;
+		for (int i = 0; i < entityList.size(); i++) {
+			if (entityList.get(i).getName().equals(name)) {
+				entityList.get(i).setName(newName);
+				count++;
+			}
+		}
+		return count;
 	}
 
 	/**
@@ -89,19 +268,27 @@ public class JixelEntityManager {
 
 	/**
 	 * Returns whether or not the list contains any entity with the given name
-	 * @param s - The name to look for
+	 * @param name - The name to look for
 	 * @return whether or not the list contains the entity
 	 */
 	public synchronized boolean containsByName(String name) {
-		for (JixelEntity entity : entityList) {
-			String i = entity.getName();
-			if (i == null && name == null) {
-				return true;
-			} else if (i.equals(name)) {
-				return true;
+		return indexOfByName(name) != -1;
+	}
+
+	/**
+	 * Returns the index of the first occurrence of an entity with a given name in the underlying entity list
+	 * @param name - The name to look for
+	 * @return the index of the entity with the given name
+	 */
+	public synchronized int indexOfByName(String name) {
+		for (int i = 0; i < entityList.size(); i++) {
+			if (entityList.get(i).getName() == null && name == null) {
+				return i;
+			} else if (entityList.get(i).getName().equals(name)) {
+				return i;
 			}
 		}
-		return false;
+		return -1;
 	}
 
 	/**
@@ -135,7 +322,7 @@ public class JixelEntityManager {
 					return false;
 				}
 			}
-			return entityList.addAll(entityList);
+			return this.entityList.addAll(entityList);
 		}
 		return false;
 	}
@@ -146,10 +333,19 @@ public class JixelEntityManager {
 	 * @return whether or not the list contains the entity
 	 */
 	public synchronized boolean contains(JixelEntity e) {
+		return indexOf(e) != -1;
+	}
+
+	/**
+	 * Returns the index of the first occurrence of a given entity in the underlying entity list
+	 * @param e - Which entity to look for
+	 * @return the index of the given entity Will return -1 if the entity is not found
+	 */
+	public synchronized int indexOf(JixelEntity e) {
 		if (e == null) {
-			return false;
+			return -1;
 		}
-		return entityList.contains(e);
+		return entityList.indexOf(e);
 	}
 
 	/**
