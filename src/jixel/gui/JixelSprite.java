@@ -6,46 +6,45 @@ import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
 import javax.imageio.ImageIO;
 
 import jixel.stage.JixelGame;
 
-public class JixelSprite {
+public class JixelSprite implements Serializable{
 
-	private final String PATH;
+	private String path;
 	private int width, height;
 
 	private transient BufferedImage img;
 	private int sheetWidth, sheetHeight;
 	private int[] sheetPixels;
 	private int currentTile;
-	protected double x, y;
+	private double x, y;
 
 	private boolean flipH = false, flipV = false;
 
 	/**
 	 * Constructor for JixelSprite
-	 * @param PATH - Location of the sprite sheet
-	 */
-	public JixelSprite(final String PATH) {
-		this.PATH = PATH;
-		this.width = JixelGame.getScreen().getTileSize();
-		this.height = JixelGame.getScreen().getTileSize();
-		loadSheet();
-	}
-
-	/**
-	 * Constructor for JixelSprite
-	 * @param PATH - Location of the sprite sheet
+	 * @param path - Location of the sprite sheet
 	 * @param width - Width of a given sprite
 	 * @param height - Height of a given sprite
 	 */
-	public JixelSprite(final String PATH, int width, int height) {
-		this.PATH = PATH;
-		this.width = width;
-		this.height = height;
-		loadSheet();
+	public JixelSprite(String path) {
+		int tileSize = JixelGame.getScreen().getTileSize();
+		loadSheet(path, tileSize, tileSize);
+	}
+	
+	/**
+	 * Constructor for JixelSprite
+	 * @param path - Location of the sprite sheet
+	 * @param width - Width of a given sprite
+	 * @param height - Height of a given sprite
+	 */
+	public JixelSprite(String path, int width, int height) {
+		loadSheet(path, width, height);
 	}
 
 	/**
@@ -85,10 +84,13 @@ public class JixelSprite {
 	}
 
 	/**
-	 * Loads the tilesheet for the sprite
+	 * Loads an underlying tile sheet for the sprite
 	 */
-	protected void loadSheet() {
-		File f = new File(PATH);
+	public synchronized void loadSheet(String path, int width, int height) {
+		this.path = path;
+		this.width = width;
+		this.height = height;
+		File f = new File(path);
 		try {
 			img = ImageIO.read(f);
 			sheetWidth = img.getWidth();
@@ -101,13 +103,24 @@ public class JixelSprite {
 			JixelGame.getConsole().printErr("Failed to load tile sheet at " + f.getPath(), e);
 		}
 	}
+	
+	/**
+	 * Rereading image after loading from serialization
+	 * @param in
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+		in.defaultReadObject();
+		loadSheet(path, width, height);
+	}
 
 	/**
 	 * The main method to draw sprites
 	 * @param g - Graphics object for the screen
 	 * @param camera - The camera to draw it in
 	 */
-	public void getDrawn(Graphics2D g, JixelCamera camera) {
+	public synchronized void getDrawn(Graphics2D g, JixelCamera camera) {
 		int spriteX = (int) getX();
 		int spriteY = (int) getY();
 		if (spriteX > camera.getMaxX() + camera.getCameraX() || spriteX + getWidth() < camera.getCameraX() + camera.getMinX()) {
@@ -117,7 +130,7 @@ public class JixelSprite {
 			return;
 		}
 		BufferedImage img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-		int[] entityPixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
+		int[] spritePixels = ((DataBufferInt) (img.getRaster().getDataBuffer())).getData();
 
 		for (int y = 0; y < getHeight(); y++) {
 			if (spriteY + y > camera.getCameraY() + camera.getMinY() - 1 && spriteY + y < camera.getCameraY() + camera.getMaxY()) {
@@ -125,7 +138,7 @@ public class JixelSprite {
 					if (spriteX + x > camera.getCameraX() + camera.getMinX() - 1 && spriteX + x < camera.getCameraX() + camera.getMaxX()) {
 						int xx = isFlipH() ? getWidth() - x - 1 : x; //whether or not to flip horizontally
 						int yy = isFlipV() ? getHeight() - y - 1 : y; //whether or not to flip vertically
-						entityPixels[x + y * getWidth()] = getPixel(getTileID(), xx, yy);
+						spritePixels[x + y * getWidth()] = getPixel(getTileID(), xx, yy);
 					}
 				}
 			}
@@ -190,7 +203,7 @@ public class JixelSprite {
 	}
 
 	/**
-	 * @param flipV - Whether or not the sprite is flipped veritcally
+	 * @param flipV - Whether or not the sprite is flipped vertically
 	 */
 	public void setFlipV(boolean state) {
 		this.flipV = state;
@@ -223,9 +236,16 @@ public class JixelSprite {
 	public void setY(double y) {
 		this.y = y;
 	}
+	
+	/**
+	 * @return the path to the underlying sprite sheet
+	 */
+	public String getPath(){
+		return path;
+	}
 
 	@Override
 	public String toString() {
-		return "JixelSprite [PATH=" + PATH + ", width=" + width + ", height=" + height + ", x=" + x + ", y=" + y + "]";
+		return "JixelSprite [PATH=" + path + ", width=" + width + ", height=" + height + ", x=" + x + ", y=" + y + "]";
 	}
 }

@@ -2,9 +2,6 @@ package jixel.entity;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,47 +12,79 @@ import jixel.gui.JixelSprite;
 import jixel.stage.JixelGame;
 
 @SuppressWarnings("serial")
-public abstract class JixelEntity extends JixelSprite implements Comparable<JixelEntity>, Serializable {
+public abstract class JixelEntity extends JixelSprite implements Comparable<JixelEntity> {
 
-	private String name;
+	private String name, animPath;
 	private double speed;
 	public boolean wasUpdated = false;
 
 	private String currentAnim = null;
-	private int animIndex = 1, fps = 0, frameCount = 0;
-	private final Map<String, List<Integer>> animMap = new HashMap<String, List<Integer>>();
+	private int animIndex, fps, frameCount;
+	private Map<String, List<Integer>> animMap = new HashMap<String, List<Integer>>();
 
-	public JixelEntity(final String IMG_PATH, final String ANIM_PATH, String name, int tileX, int tileY, double speed) {
-		super(IMG_PATH);
+	public JixelEntity(String imgPath, String animPath, String name, int width, int height, int tileX, int tileY, double speed) {
+		super(imgPath, width, height);
+		this.animPath = animPath;
 		this.name = name;
 		int tileSize = JixelGame.getScreen().getTileSize();
-		this.x = tileX * tileSize;
-		this.y = tileY * tileSize;
-		if (ANIM_PATH != null) {
-			readAnim(ANIM_PATH);
+		setX(tileX * tileSize);
+		setY(tileY * tileSize);
+		if (animPath != null) {
+			loadAnimFile(animPath);
 		}
-		loadSheet();
+	}
+
+	public synchronized void changeSprite(JixelEntity e) {
+		if(e != null){
+			changeSprite(e.getPath(), e.getAnimPath(), getWidth(), getHeight());
+		}else{
+			JixelGame.getConsole().printErr(new NullPointerException("Can not change sprite to null entity at " + name));
+		}
+	}
+
+	/**
+	 * Change the underlying sprite for the entity
+	 * @param imgPath - The new path for the underlying sprite sheet
+	 * @param animPath - The new path for the anim file
+	 * @param width - The new width of the entity
+	 * @param height - The new height of the entity
+	 */
+	public synchronized void changeSprite(String imgPath, String animPath, int width, int height) {
+		loadSheet(imgPath, width, height);
+		setTileID(0);
+		if (animPath != null) {
+			loadAnimFile(animPath);
+		}else{
+			animMap = null;
+			currentAnim = null;
+		}
 	}
 
 	/**
 	 * Reads the animation file for an entity
 	 * @param path - The path of the anim file
 	 */
-	private void readAnim(String path) {
+	public void loadAnimFile(String path) {
+		this.animPath = path;
+		animIndex = 1;
+		fps = 0;
+		frameCount = 0;
 		File f = new File(path);
 		try (Scanner scan = new Scanner(f)) {
 			fps = scan.nextInt();
 			scan.nextLine();
-			while (scan.hasNextLine()) {
-				String name = scan.next();
-				List<Integer> tiles = new ArrayList<Integer>();
-				if (animMap.size() == 0) {
-					currentAnim = name;
+			synchronized (this) {
+				while (scan.hasNextLine()) {
+					String name = scan.next();
+					List<Integer> tiles = new ArrayList<Integer>();
+					if (animMap.size() == 0) {
+						currentAnim = name;
+					}
+					while (scan.hasNextInt()) {
+						tiles.add(scan.nextInt());
+					}
+					animMap.put(name, tiles);
 				}
-				while (scan.hasNextInt()) {
-					tiles.add(scan.nextInt());
-				}
-				animMap.put(name, tiles);
 			}
 		} catch (FileNotFoundException e) {
 			JixelGame.getConsole().printErr("Could not find anim file at: " + f.getPath(), e);
@@ -87,7 +116,11 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	 * Plays the animation with the given name for the entity
 	 * @param name - The name of the animation
 	 */
-	public void playAnim(String name) {
+	public synchronized void playAnim(String name) {
+		if(currentAnim == null){
+			JixelGame.getConsole().printErr(new NullPointerException("Can not play animation if no anim file exists at " + this.name));
+			return;
+		}
 		if (animMap.containsKey(name)) {
 			if (!name.equals(currentAnim)) {
 				animIndex = 1;
@@ -96,17 +129,6 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 		} else {
 			JixelGame.getConsole().printErr(new FileNotFoundException("No anim called " + name + " found in " + this.name));
 		}
-	}
-
-	/**
-	 * Rereading image after loading from serialization
-	 * @param in
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
-	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-		loadSheet();
 	}
 
 	/**
@@ -135,9 +157,11 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	 */
 	public void applyActions() {
 		if (!JixelGame.getPaused() && !wasUpdated) {
-			if (currentAnim != null && fps > 0) {
-				frameCount++;
-				updateAnim();
+			synchronized (this) {
+				if (currentAnim != null && fps > 0) {
+					frameCount++;
+					updateAnim();
+				}
 			}
 			update();
 			wasUpdated = true;
@@ -180,6 +204,13 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	public void setSpeed(double speed) {
 		this.speed = speed;
 	}
+	
+	/**
+	 * @return the underlying path for the entity's anim file
+	 */
+	public String getAnimPath(){
+		return animPath;
+	}
 
 	/**
 	 * Compares an entity by Y axis position
@@ -204,7 +235,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	@Override
 	public String toString() {
-		return "JixelEntity [name=" + name + ", x=" + x + ", y=" + y + ", tileID=" + getTileID() + "]";
+		return "JixelEntity [name=" + name + ", x=" + getX() + ", y=" + getY() + ", tileID=" + getTileID() + "]";
 	}
 
 }
