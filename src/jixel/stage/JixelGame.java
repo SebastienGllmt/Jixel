@@ -2,6 +2,7 @@ package jixel.stage;
 
 import jixel.console.JixelConsole;
 import jixel.console.JixelVariableManager;
+import jixel.gui.JixelPlayer;
 import jixel.gui.JixelScreen;
 import jixel.input.JixelKeyInput;
 import jixel.input.JixelMouseInput;
@@ -13,6 +14,7 @@ public abstract class JixelGame implements Runnable {
 	private static JixelKeyInput keyInput;
 	private static JixelMouseInput mouseInput;
 	private static JixelTimer timer;
+	private static JixelPlayer player;
 
 	private static JixelScreen screen;
 
@@ -37,17 +39,17 @@ public abstract class JixelGame implements Runnable {
 
 		keyInput = new JixelKeyInput();
 		mouseInput = new JixelMouseInput();
-
+		player = new JixelPlayer();
 		getScreen().canvas.addKeyListener(keyInput);
 		getScreen().canvas.addMouseListener(mouseInput);
 
-		//Adds a user-specified shutdown hook for the game
+		// Adds a user-specified shutdown hook for the game
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				closeOperation();
 			}
 		});
-		
+
 		start();
 	}
 
@@ -64,7 +66,7 @@ public abstract class JixelGame implements Runnable {
 	public static JixelScreen getScreen() {
 		return screen;
 	}
-	
+
 	/**
 	 * @return the console for the engine
 	 */
@@ -80,6 +82,13 @@ public abstract class JixelGame implements Runnable {
 	}
 
 	/**
+	 * @return the sound player for the engine
+	 */
+	public static JixelPlayer getPlayer() {
+		return player;
+	}
+
+	/**
 	 * @return whether or not the game is paused
 	 */
 	public static boolean getPaused() {
@@ -88,6 +97,7 @@ public abstract class JixelGame implements Runnable {
 
 	/**
 	 * Pauses or unpauses the game
+	 * 
 	 * @param newState
 	 */
 	public static void setPaused(boolean newState) {
@@ -121,7 +131,12 @@ public abstract class JixelGame implements Runnable {
 	public abstract void update();
 
 	/**
-	 * @return the lock for updating the game
+	 * The abstract method to run when the engine starts
+	 */
+	public abstract void onLoad();
+
+	/**
+	 * @return the lock for updating the game. Will block both update and render calls
 	 */
 	public static Object getUpdateLock() {
 		return updateLock;
@@ -129,6 +144,7 @@ public abstract class JixelGame implements Runnable {
 
 	@Override
 	public void run() {
+		onLoad();
 		while (playing) {
 			synchronized (getUpdateLock()) {
 				getTimer().updateTime();
