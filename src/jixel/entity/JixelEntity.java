@@ -52,6 +52,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Change the underlying sprite for the entity
+	 * 
 	 * @param imgPath - The new path for the underlying sprite sheet
 	 * @param animPath - The new path for the anim file
 	 * @param width - The new width of the entity
@@ -70,6 +71,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Reads the animation file for an entity
+	 * 
 	 * @param path - The path of the anim file
 	 */
 	public void loadAnimFile(String path) {
@@ -122,6 +124,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Plays the animation with the given name for the entity
+	 * 
 	 * @param name - The name of the animation
 	 */
 	public synchronized void playAnim(String name) {
@@ -141,6 +144,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Compares if this entity's name is equal to a given String
+	 * 
 	 * @param name - The name to compare to
 	 * @return whether or not the string is equal to the name
 	 */
@@ -150,6 +154,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Compares if two entities have the same name
+	 * 
 	 * @param e - Entity to compare
 	 * @return whether or not they have the same name
 	 */
@@ -222,6 +227,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Compares an entity by Y axis position
+	 * 
 	 * @return -1 if entity is lower, sorts by x if equal, 1 if higher
 	 */
 	public int compareTo(JixelEntity e) {
@@ -271,6 +277,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Sets a new origin for the entity
+	 * 
 	 * @param originX - The new origin for the x axis
 	 * @param originY - The new origin for the y axis
 	 */
@@ -288,6 +295,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Checks if the entity's underlying hit box intersects an entity
+	 * 
 	 * @param e - The entity to compare
 	 * @return whether or not they intersect
 	 */
@@ -301,6 +309,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 
 	/**
 	 * Checks if the entity's underlying hit box intersects a shape
+	 * 
 	 * @param s - The shape to compare
 	 * @return whether or not they intersect
 	 */
@@ -326,14 +335,14 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 			hitBox.setLocation((int) getX(), (int) y);
 		}
 	}
-	
+
 	/**
-	 * Returns a list containing all the entities this entity is colliding with at this moment.
-	 * 		Note: Use of this list must be synchronized with the list as a lock. 
-	 * 			Failure to do so will result in a ConcurrentModificationException or undetermined behavior.
+	 * Returns a list containing all the entities this entity is colliding with at this moment. Note: Use of this list must be synchronized with the list as a lock. Failure to do so will result in a
+	 * ConcurrentModificationException or undetermined behavior.
+	 * 
 	 * @return the underlying collision list
 	 */
-	public List<JixelEntity> getCollisionList(){
+	public List<JixelEntity> getCollisionList() {
 		return collisionList;
 	}
 

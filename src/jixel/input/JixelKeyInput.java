@@ -79,7 +79,6 @@ public class JixelKeyInput implements KeyListener {
 		if (keyCode != -1) {
 			JixelKey key = keyMap.get(keyCode);
 			if (key.isHeld) {
-				key.newHeldState = false;
 				return true;
 			}
 		}
