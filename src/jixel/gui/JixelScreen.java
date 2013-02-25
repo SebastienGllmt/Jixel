@@ -73,6 +73,7 @@ public class JixelScreen {
 
 	/**
 	 * Resizes the screen
+	 * 
 	 * @param width - The new width of the screen
 	 * @param height - The new height of the screen
 	 * @return whether or not the screen was resized
@@ -94,12 +95,15 @@ public class JixelScreen {
 
 	/**
 	 * Add a new camera to the screen
+	 * 
 	 * @param camera - The new camera
 	 */
 	public void addCamera(JixelCamera camera) {
 		synchronized (JixelGame.getUpdateLock()) {
 			if (camera != null) {
-				cameraList.add(camera);
+				synchronized (cameraList) {
+					cameraList.add(camera);
+				}
 			} else {
 				JixelGame.getConsole().printErr(new NullPointerException("Can not set camera to null!"));
 			}
@@ -108,13 +112,16 @@ public class JixelScreen {
 
 	/**
 	 * Removes the first instance of a given camera from the camera list
+	 * 
 	 * @param camera - The camera to remove
 	 * @return whether or not the element was removed
 	 */
 	public boolean removeCamera(JixelCamera camera) {
 		synchronized (JixelGame.getUpdateLock()) {
 			if (camera != null) {
-				return cameraList.remove(camera);
+				synchronized (cameraList) {
+					return cameraList.remove(camera);
+				}
 			}
 			return false;
 		}
@@ -125,16 +132,23 @@ public class JixelScreen {
 	 */
 	public void clearCameraList() {
 		synchronized (JixelGame.getUpdateLock()) {
-			cameraList.clear();
+			synchronized (cameraList) {
+				cameraList.clear();
+			}
 		}
 	}
 
 	/**
+	 * Return the underlying camera list for the screen. This needs to be in a synchronized call with the list as a lock. Failure to do so can result in a ConcurrentModifiedException or undefined
+	 * behaviour
+	 * 
 	 * @return the list of cameras for the screen
 	 */
 	public List<JixelCamera> getUnmodifiableCameraList() {
 		synchronized (JixelGame.getUpdateLock()) {
-			return Collections.unmodifiableList(cameraList);
+			synchronized (cameraList) {
+				return Collections.unmodifiableList(cameraList);
+			}
 		}
 	}
 
@@ -143,10 +157,14 @@ public class JixelScreen {
 	 */
 	public void update() {
 		synchronized (JixelGame.getUpdateLock()) {
-			for (JixelCamera camera : cameraList) {
+			List<JixelCamera> cameraListCopy;
+			synchronized (cameraList) {
+				cameraListCopy = new ArrayList<JixelCamera>(cameraList);
+			}
+			for (JixelCamera camera : cameraListCopy) {
 				camera.getEntityManager().resetUpdate();
 			}
-			for (JixelCamera camera : cameraList) {
+			for (JixelCamera camera : cameraListCopy) {
 				camera.getEntityManager().update();
 			}
 		}
@@ -161,6 +179,7 @@ public class JixelScreen {
 
 	/**
 	 * Sets the background color for the screen
+	 * 
 	 * @param color - The new color
 	 */
 	public void setBackground(int color) {
@@ -169,6 +188,7 @@ public class JixelScreen {
 
 	/**
 	 * Sets the background color for the screen
+	 * 
 	 * @param c - The new color
 	 */
 	public void setBackground(Color c) {
@@ -183,17 +203,19 @@ public class JixelScreen {
 	 * Main method to draw entities
 	 */
 	private void drawSprites(JixelCamera camera, Graphics2D g) {
-		camera.drawUnder(g); //draw under entities what the camera wants
+		camera.drawUnder(g); // draw under entities what the camera wants
 
 		/** Draw entities **/
 		camera.getEntityManager().sort();
-		
+
 		List<JixelEntity> entityList = camera.getEntityManager().getUnmodifiableList();
-		for (JixelEntity e : entityList) {
-			e.getDrawn(g, camera);
+		synchronized (entityList) {
+			for (JixelEntity e : entityList) {
+				e.getDrawn(g, camera);
+			}
 		}
-		
-		camera.drawOver(g); //draw over entities what the camera wants
+
+		camera.drawOver(g); // draw over entities what the camera wants
 	}
 
 	private void drawConsole(Graphics2D g) {
@@ -215,6 +237,7 @@ public class JixelScreen {
 
 	/**
 	 * Adjusts the screen's offset
+	 * 
 	 * @param xOffset - The new offset for the x axis
 	 * @param yOffset - The new offset for the y axis
 	 */
@@ -280,23 +303,25 @@ public class JixelScreen {
 			g.setColor(canvas.getBackground());
 			g.fillRect(0, 0, width, height);
 
-			for (JixelCamera camera : cameraList) {
-				updateMouse(camera);
-				updateCamera(camera);
-				if (camera.getMap().canLoad()) {
-					BufferedImage camImg = new BufferedImage(camera.getWidth(), camera.getHeight(), BufferedImage.TYPE_INT_ARGB);
-					int[] camPixels = ((DataBufferInt) camImg.getRaster().getDataBuffer()).getData();
-					for (int y = 0; y < camera.getHeight(); y++) {
-						int yy = y + camera.getCameraY() + camera.getMinY();
-						for (int x = 0; x < camera.getWidth(); x++) {
-							int xx = x + camera.getCameraX() + camera.getMinX();
-							int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
-							camPixels[x + y * camera.getWidth()] = camera.getMap().getSpriteSheet().getPixel(tileID, xx & 31, yy & 31);
+			synchronized (cameraList) {
+				for (JixelCamera camera : cameraList) {
+					updateMouse(camera);
+					updateCamera(camera);
+					if (camera.getMap().canLoad()) {
+						BufferedImage camImg = new BufferedImage(camera.getWidth(), camera.getHeight(), BufferedImage.TYPE_INT_ARGB);
+						int[] camPixels = ((DataBufferInt) camImg.getRaster().getDataBuffer()).getData();
+						for (int y = 0; y < camera.getHeight(); y++) {
+							int yy = y + camera.getCameraY() + camera.getMinY();
+							for (int x = 0; x < camera.getWidth(); x++) {
+								int xx = x + camera.getCameraX() + camera.getMinX();
+								int tileID = camera.getMap().getTile(xx >> FIXSHIFT, yy >> FIXSHIFT);
+								camPixels[x + y * camera.getWidth()] = camera.getMap().getSpriteSheet().getPixel(tileID, xx & 31, yy & 31);
+							}
 						}
+						g.drawImage(camImg, camera.getMinX(), camera.getMinY(), camera.getWidth(), camera.getHeight(), null);
 					}
-					g.drawImage(camImg, camera.getMinX(), camera.getMinY(), camera.getWidth(), camera.getHeight(), null);
+					drawSprites(camera, g);
 				}
-				drawSprites(camera, g);
 			}
 			drawConsole(g);
 
@@ -356,6 +381,7 @@ public class JixelScreen {
 
 	/**
 	 * Resizes the screen
+	 * 
 	 * @param dimension - The new dimension of the screen
 	 * @return whether or not the screen was resized
 	 */
@@ -376,6 +402,7 @@ public class JixelScreen {
 
 	/**
 	 * Resizes the screen
+	 * 
 	 * @param width - The new width
 	 * @param height - The new height
 	 * @return whether or not the screen was resized
@@ -414,6 +441,7 @@ public class JixelScreen {
 
 	/**
 	 * Sets a new scale for the graphics
+	 * 
 	 * @param scale
 	 */
 	public boolean setScale(double scaleX, double scaleY) {
@@ -437,6 +465,7 @@ public class JixelScreen {
 
 	/**
 	 * Sets the cursor for the engine
+	 * 
 	 * @param path - The path for the cursor
 	 * @param hotSpot - The point in the image
 	 * @return
