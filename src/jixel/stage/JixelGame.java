@@ -18,7 +18,7 @@ public abstract class JixelGame implements Runnable {
 
 	private static JixelScreen screen;
 
-	public static boolean playing = true;
+	public static volatile boolean playing = true;
 	public final String GAME_TITLE;
 	private static boolean paused = false;
 
@@ -178,7 +178,7 @@ public abstract class JixelGame implements Runnable {
 	/**
 	 * Closes the game
 	 */
-	public void closeGame() {
+	public static void closeGame() {
 		playing = false;
 	}
 
@@ -186,11 +186,7 @@ public abstract class JixelGame implements Runnable {
 	 * Joins the main thread
 	 */
 	private synchronized void stop() {
-		try {
-			thread.join();
-		} catch (InterruptedException e) {
-			JixelGame.getConsole().printErr("Failed to stop JixelGame thread", e);
-		}
+		System.exit(0);
 	}
 
 }

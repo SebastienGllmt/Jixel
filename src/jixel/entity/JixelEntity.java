@@ -34,6 +34,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 		super(imgPath, width, height, x, y);
 		this.animPath = animPath;
 		this.name = name;
+		this.speed = speed;
 		hitBox = new Rectangle(x, y, width, height);
 		originX = width >> 1;
 		originY = height >> 1;
@@ -228,7 +229,7 @@ public abstract class JixelEntity extends JixelSprite implements Comparable<Jixe
 	/**
 	 * Compares an entity by Y axis position
 	 * 
-	 * @return -1 if entity is lower, sorts by x if equal, 1 if higher
+	 * @return -1 if entity is lower or null, sorts by x if equal, 1 if higher
 	 */
 	public int compareTo(JixelEntity e) {
 		if (e == null) {

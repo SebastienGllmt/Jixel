@@ -140,6 +140,9 @@ public class JixelPlayer {
 	}
 
 	public boolean musicPlaying() {
+		if(dataLine == null){
+			return false;
+		}
 		return dataLine.isOpen();
 	}
 
@@ -147,7 +150,7 @@ public class JixelPlayer {
 		playFile(filepath, --times, false, false);
 	}
 
-	public void playFile(final String filepath, final int times, final boolean music, final boolean blocking) {
+	private void playFile(final String filepath, final int times, final boolean music, final boolean blocking) {
 		if (times < 0) {
 			JixelGame.getConsole().printErr(new IllegalArgumentException("Can not play a sound less than 1 time"));
 			return;
